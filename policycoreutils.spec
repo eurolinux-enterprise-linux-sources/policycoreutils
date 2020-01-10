@@ -7,7 +7,7 @@
 Summary: SELinux policy core utilities
 Name:	 policycoreutils
 Version: 2.0.83
-Release: 19.47%{?dist}
+Release: 19.47%{?dist}.1
 License: GPLv2+
 Group:	 System Environment/Base
 Source:  http://www.nsa.gov/selinux/archives/policycoreutils-%{version}.tgz
@@ -47,6 +47,7 @@ Patch24: 0009-sandbox-1091139.patch
 Patch25: 0010-setfiles-restore-1086572.patch
 Patch26: 0011-setfiles-options-1086456.patch
 Patch27: 0012-failed_qa_bugs.patch
+Patch28: 0013-semanage-1148062.patch
 Obsoletes: policycoreutils < 2.0.61-2
 
 %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)")
@@ -108,6 +109,7 @@ context.
 %patch25 -p2 -b .1086572
 %patch26 -p2 -b .1086456
 %patch27 -p2 -b .1086456
+%patch28 -p2 -b .1148062
 %build
 make LSPP_PRIV=y LIBDIR="%{_libdir}" CFLAGS="%{optflags} -fPIE" LDFLAGS="-pie -Wl,-z,relro" all 
 make -C sepolgen-%{sepolgenver} LSPP_PRIV=y LIBDIR="%{_libdir}" CFLAGS="%{optflags} -fPIE" LDFLAGS="-pie -Wl,-z,relro" all 
@@ -363,6 +365,10 @@ fi
 exit 0
 
 %changelog
+* Thu Sep 2 2014 Miroslav Grepl <mgrepl@redhat.com> - 2.0.83-19.47.1
+- Fix semanageRecords() to define load variable.
+Resolves:#1148800
+
 * Fri Aug 8 2014 Miroslav Grepl <mgrepl@redhat.com> - 2.0.83-19.47
 - Fix setfiles man page
 Resolves:#1086456
