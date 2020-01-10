@@ -7,7 +7,7 @@
 Summary: SELinux policy core utilities
 Name:	 policycoreutils
 Version: 2.0.83
-Release: 19.47%{?dist}.1
+Release: 24%{?dist}
 License: GPLv2+
 Group:	 System Environment/Base
 Source:  http://www.nsa.gov/selinux/archives/policycoreutils-%{version}.tgz
@@ -48,6 +48,9 @@ Patch25: 0010-setfiles-restore-1086572.patch
 Patch26: 0011-setfiles-options-1086456.patch
 Patch27: 0012-failed_qa_bugs.patch
 Patch28: 0013-semanage-1148062.patch
+Patch29: 0014-audit2allow-1111999.patch
+Patch31: 0016-fixfiles-verify-dont-relabel-tmp-1113083.patch
+Patch32: 0017-semanage-S-1122850.patch
 Obsoletes: policycoreutils < 2.0.61-2
 
 %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)")
@@ -110,6 +113,10 @@ context.
 %patch26 -p2 -b .1086456
 %patch27 -p2 -b .1086456
 %patch28 -p2 -b .1148062
+%patch29 -p1 -b .1111999
+%patch31 -p1 -b .1113083
+%patch32 -p1 -b .1122850
+
 %build
 make LSPP_PRIV=y LIBDIR="%{_libdir}" CFLAGS="%{optflags} -fPIE" LDFLAGS="-pie -Wl,-z,relro" all 
 make -C sepolgen-%{sepolgenver} LSPP_PRIV=y LIBDIR="%{_libdir}" CFLAGS="%{optflags} -fPIE" LDFLAGS="-pie -Wl,-z,relro" all 
@@ -177,12 +184,17 @@ The policycoreutils-python package contains the management tools use to manage a
 %{_bindir}/audit2why
 %{_bindir}/chcat
 %{_bindir}/sandbox
+%{_bindir}/sepolgen
 %{_bindir}/sepolgen-ifgen
 %{_bindir}/sepolgen-ifgen-attr-helper
 %{python_sitelib}/seobject.py*
 %{python_sitelib}/sepolgen
 %{python_sitelib}/%{name}*.egg-info
 %{pkgpythondir}
+%dir %{_datadir}/system-config-selinux
+%{_datadir}/system-config-selinux/*.py*
+%dir %{_datadir}/system-config-selinux/templates
+%{_datadir}/system-config-selinux/templates/*.py*
 %dir  /var/lib/sepolgen
 %dir  /var/lib/selinux
 /var/lib/sepolgen/perm_map
@@ -264,18 +276,14 @@ system-config-selinux is a utility for managing the SELinux environment
 %defattr(-,root,root)
 %{_bindir}/system-config-selinux
 %{_bindir}/selinux-polgengui
-%{_bindir}/sepolgen
 %{_datadir}/applications/fedora-system-config-selinux.desktop
 %{_datadir}/applications/fedora-selinux-polgengui.desktop
 %{_datadir}/icons/hicolor/24x24/apps/system-config-selinux.png
 %{_datadir}/pixmaps/system-config-selinux.png
 %dir %{_datadir}/system-config-selinux
-%dir %{_datadir}/system-config-selinux/templates
 %{_datadir}/system-config-selinux/system-config-selinux.png
-%{_datadir}/system-config-selinux/*.py*
 %{_datadir}/system-config-selinux/selinux.tbl
 %{_datadir}/system-config-selinux/*.glade
-%{_datadir}/system-config-selinux/templates/*.py*
 %config(noreplace) %{_sysconfdir}/pam.d/system-config-selinux
 %config(noreplace) %{_sysconfdir}/pam.d/selinux-polgengui
 %config(noreplace) %{_sysconfdir}/security/console.apps/system-config-selinux
@@ -365,9 +373,35 @@ fi
 exit 0
 
 %changelog
-* Thu Sep 2 2014 Miroslav Grepl <mgrepl@redhat.com> - 2.0.83-19.47.1
-- Fix semanageRecords() to define load variable.
-Resolves:#1148800
+* Fri May 29 2015 Petr Lautrbach <plautrba@redhat.com> 2.0.83-24
+- fix a regression in 'fixfiles check' introduced in 2.0.83-21
+Related: rhbz#1113083
+
+* Mon May 18 2015 Petr Lautrbach <plautrba@redhat.com> 2.0.83-23
+- Move python scripts in /usr/share/system-config-selinux to policycoreutils-python
+Resolves: rhbz#995778
+
+* Mon May 04 2015 Petr Lautrbach <plautrba@redhat.com> 2.0.83-22
+- revert: chcat: Change the isSensitivity() detection
+Related: rhbz#965397
+
+* Tue Mar 10 2015 Petr Lautrbach <plautrba@redhat.com> 2.0.83-21
+- fixfiles verify: do not relabel /tmp and /var/tmp dirs
+Resolves: rhbz#1113083
+- Fix semanage -S <store> -o <output>
+Resolves: rhbz#1122850
+
+* Mon Mar 02 2015 Petr Lautrbach <plautrba@redhat.com> 2.0.83-20
+- chcat: Change the isSensitivity() detection
+Resolves: rhbz#965397
+- Move sepolgen utility from policycoreutils-gui to policycoreutils-python
+Resolves: rhbz#995778
+- audit2allow: use date time format compatible with ausearch
+Resolves: rhbz#1111999
+
+* Thu Sep 2 2014 Miroslav Grepl <mgrepl@redhat.com> - 2.0.83-19.48
+- Fix semanageRecords() to define load variable
+Resolves:#1148062
 
 * Fri Aug 8 2014 Miroslav Grepl <mgrepl@redhat.com> - 2.0.83-19.47
 - Fix setfiles man page
@@ -564,7 +598,6 @@ Resolves: #666861
 - Remove sandbox calling -k, only should be used by seunshare, should not be
 called all the time.
 Resolves: #679690
->>>>>>> c2a6de616017e800342523076acf56bb12ccadbf
 Resolves: #679689
 Resolves: #677541
 Resolves: #679798
