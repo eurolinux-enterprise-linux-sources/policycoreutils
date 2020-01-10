@@ -7,7 +7,7 @@
 Summary: SELinux policy core utilities
 Name:	 policycoreutils
 Version: 2.0.83
-Release: 24%{?dist}
+Release: 29%{?dist}
 License: GPLv2+
 Group:	 System Environment/Base
 Source:  http://www.nsa.gov/selinux/archives/policycoreutils-%{version}.tgz
@@ -21,6 +21,7 @@ Source6: selinux-polgengui.desktop
 Source7: selinux-polgengui.console
 Source8: policycoreutils_man_ru2.tar.bz2
 Patch:	 policycoreutils-rhat.patch
+# based on https://fedora.zanata.org/iteration/view/selinux/rhel6
 Patch1:	 policycoreutils-po.patch
 Patch3:	 policycoreutils-gui.patch
 Patch4:	 policycoreutils-sepolgen.patch
@@ -51,6 +52,26 @@ Patch28: 0013-semanage-1148062.patch
 Patch29: 0014-audit2allow-1111999.patch
 Patch31: 0016-fixfiles-verify-dont-relabel-tmp-1113083.patch
 Patch32: 0017-semanage-S-1122850.patch
+# https://bugzilla.redhat.com/show_bug.cgi?id=1206767
+Patch33: 0018-semanage-Use-OrderedDict-for-list-of-fcontexts.patch
+# https://bugzilla.redhat.com/show_bug.cgi?id=1240788
+Patch34: 0019-fixfiles-check-the-SELinux-status.patch
+# https://bugzilla.redhat.com/show_bug.cgi?id=1208801
+Patch35: 0020-semanage-check-if-store-exists.patch
+# https://bugzilla.redhat.com/show_bug.cgi?id=1270888
+Patch36: 0021-semanage-don-t-skip-reserver_port_t.patch
+# https://bugzilla.redhat.com/show_bug.cgi?id=1281877
+Patch37: 0022-restorecond-treat-root-as-a-regular-user.patch
+# https://bugzilla.redhat.com/show_bug.cgi?id=1091120
+Patch38: 0023-sandbox-better-document-C-option.patch
+# https://bugzilla.redhat.com/show_bug.cgi?id=1278811
+# https://bugzilla.redhat.com/show_bug.cgi?id=1278913
+Patch39: 0024-secon-newrole-fix-inconsistence-between-help-and-man.patch
+# https://bugzilla.redhat.com/show_bug.cgi?id=1159336
+Patch40: 0025-sandbox-Improve-comments-in-sysconfig-file.patch
+# https://bugzilla.redhat.com/show_bug.cgi?id=1306550
+Patch41: 0026-Fix-sepolgen-test-cases.patch
+
 Obsoletes: policycoreutils < 2.0.61-2
 
 %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)")
@@ -86,7 +107,6 @@ context.
 %prep
 %setup -q -a 1 
 %patch -p1 -b .rhat
-%patch1 -p1 -b .rhatpo
 %patch3 -p1 -b .gui
 %patch4 -p1 -b .sepolgen
 %patch5 -p1 -b .rhel6
@@ -116,6 +136,18 @@ context.
 %patch29 -p1 -b .1111999
 %patch31 -p1 -b .1113083
 %patch32 -p1 -b .1122850
+%patch33 -p1 -b .1206767
+%patch34 -p1 -b .1240788
+%patch35 -p1 -b .1208801
+%patch36 -p1 -b .1225806
+%patch37 -p1 -b .1281877
+%patch38 -p1 -b .1091120
+%patch39 -p1 -b .1278811-1278913
+%patch40 -p1 -b .1159336
+%patch41 -p1 -b .1306550
+
+# apply translations last
+%patch1 -p1 -b .rhatpo
 
 %build
 make LSPP_PRIV=y LIBDIR="%{_libdir}" CFLAGS="%{optflags} -fPIE" LDFLAGS="-pie -Wl,-z,relro" all 
@@ -373,6 +405,34 @@ fi
 exit 0
 
 %changelog
+* Wed Mar 02 2016 Petr Lautrbach <plautrba@redhat.com> 2.0.83-29
+- Update translations
+Resolves: rhbz#819794
+
+* Mon Feb 15 2016 Petr Lautrbach <plautrba@redhat.com> 2.0.83-28
+- Fix sepolgen test cases
+Resolves: rhbz#1306550
+
+* Wed Jan 20 2016 Petr Lautrbach <plautrba@redhat.com> 2.0.83-27
+- sandbox: Improve comments in sysconfig file
+Resolves: rhbz#1159336
+- secon, newrole: fix inconsistence between --help and man page
+Resolves: rhbz#1278811, rhbz#1278913
+
+* Thu Jan 07 2016 Petr Lautrbach <plautrba@redhat.com> 2.0.83-26
+- restorecond: treat root as a regular user
+Resolves: rhbz#1281877
+- semanage: don't skip reserver_port_t
+Resolves: rhbz#1225806
+- semanage: check if a store exists
+Resolves: rhbz#1208801
+- fixfiles: check the SELinux status
+Resolves: rhbz#1240788
+
+* Mon Oct 26 2015 Petr Lautrbach <plautrba@redhat.com> 2.0.83-25
+- semanage: Use OrderedDict for list of fcontexts
+Resolves: rhbz#1206767
+
 * Fri May 29 2015 Petr Lautrbach <plautrba@redhat.com> 2.0.83-24
 - fix a regression in 'fixfiles check' introduced in 2.0.83-21
 Related: rhbz#1113083
