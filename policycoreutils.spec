@@ -7,7 +7,7 @@
 Summary: SELinux policy core utilities
 Name:	 policycoreutils
 Version: 2.0.83
-Release: 29%{?dist}
+Release: 30.1%{?dist}
 License: GPLv2+
 Group:	 System Environment/Base
 Source:  http://www.nsa.gov/selinux/archives/policycoreutils-%{version}.tgz
@@ -71,6 +71,10 @@ Patch39: 0024-secon-newrole-fix-inconsistence-between-help-and-man.patch
 Patch40: 0025-sandbox-Improve-comments-in-sysconfig-file.patch
 # https://bugzilla.redhat.com/show_bug.cgi?id=1306550
 Patch41: 0026-Fix-sepolgen-test-cases.patch
+# https://bugzilla.redhat.com/show_bug.cgi?id=1378577
+# CVE-2016-7545
+Patch42: 0042-sandbox-do-not-try-setup-directories-without-X-or-M.patch
+Patch43: 0043-sandbox-Always-use-seunshare.patch
 
 Obsoletes: policycoreutils < 2.0.61-2
 
@@ -145,6 +149,8 @@ context.
 %patch39 -p1 -b .1278811-1278913
 %patch40 -p1 -b .1159336
 %patch41 -p1 -b .1306550
+%patch42 -p1 -b .CVE-2016-7545
+%patch43 -p1 -b .CVE-2016-7545-1
 
 # apply translations last
 %patch1 -p1 -b .rhatpo
@@ -405,6 +411,10 @@ fi
 exit 0
 
 %changelog
+* Fri Oct 21 2016 Petr Lautrbach <plautrba@redhat.com> - 2.0.83-30.1
+- sandbox: create a new session for sandboxed processes
+Resolves: CVE-2016-7545
+
 * Wed Mar 02 2016 Petr Lautrbach <plautrba@redhat.com> 2.0.83-29
 - Update translations
 Resolves: rhbz#819794
