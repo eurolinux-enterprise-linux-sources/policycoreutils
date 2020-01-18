@@ -1,0 +1,61 @@
+From 86f7072e9e76e4c0391eff3323cb9d8843e1b78d Mon Sep 17 00:00:00 2001
+From: Petr Lautrbach <plautrba@redhat.com>
+Date: Wed, 3 Aug 2016 09:12:24 +0200
+Subject: [PATCH] policycoreutils: preserve timestamps for .py files
+
+Mainly in in gui/ and sepolicy/ to avoid python multilib issues reported
+by rpmdiff.
+---
+ policycoreutils/gui/Makefile      | 22 +++++++++++-----------
+ policycoreutils/sepolicy/Makefile |  2 +-
+ 2 files changed, 12 insertions(+), 12 deletions(-)
+
+diff --git a/policycoreutils/gui/Makefile b/policycoreutils/gui/Makefile
+index 0c2b390..4feacc5 100644
+--- a/policycoreutils/gui/Makefile
++++ b/policycoreutils/gui/Makefile
+@@ -31,17 +31,17 @@ install: all
+ 	-mkdir -p $(DATADIR)/icons/hicolor/24x24/apps
+ 	-mkdir -p $(SYSCONFDIR)
+ 	-mkdir -p $(DATADIR)/polkit-1/actions/
+-	install -m 755 system-config-selinux.py $(SHAREDIR)
+-	install -m 755 system-config-selinux $(BINDIR)
+-	install -m 755 polgengui.py $(SHAREDIR)
+-	install -m 644 $(TARGETS) $(SHAREDIR)
+-	install -m 644 system-config-selinux.8 $(MANDIR)/man8
+-	install -m 644 selinux-polgengui.8 $(MANDIR)/man8
+-	install -m 644 system-config-selinux.png $(DATADIR)/pixmaps
+-	install -m 644 system-config-selinux.png $(DATADIR)/icons/hicolor/24x24/apps
+-	install -m 644 system-config-selinux.png $(DATADIR)/system-config-selinux
+-	install -m 644 *.desktop $(DATADIR)/system-config-selinux
+-	install -m 644 org.selinux.config.policy $(DATADIR)/polkit-1/actions/
++	install -p -m 755 system-config-selinux.py $(SHAREDIR)
++	install -p -m 755 system-config-selinux $(BINDIR)
++	install -p -m 755 polgengui.py $(SHAREDIR)
++	install -p -m 644 $(TARGETS) $(SHAREDIR)
++	install -p -m 644 system-config-selinux.8 $(MANDIR)/man8
++	install -p -m 644 selinux-polgengui.8 $(MANDIR)/man8
++	install -p -m 644 system-config-selinux.png $(DATADIR)/pixmaps
++	install -p -m 644 system-config-selinux.png $(DATADIR)/icons/hicolor/24x24/apps
++	install -p -m 644 system-config-selinux.png $(DATADIR)/system-config-selinux
++	install -p -m 644 *.desktop $(DATADIR)/system-config-selinux
++	install -p -m 644 org.selinux.config.policy $(DATADIR)/polkit-1/actions/
+ clean:
+ 
+ indent:
+diff --git a/policycoreutils/sepolicy/Makefile b/policycoreutils/sepolicy/Makefile
+index 39d46e8..5491d79 100644
+--- a/policycoreutils/sepolicy/Makefile
++++ b/policycoreutils/sepolicy/Makefile
+@@ -47,7 +47,7 @@ install:
+ 	-mkdir -p $(DESTDIR)/usr/share/polkit-1/actions/
+ 	install -m 644 org.selinux.policy $(DESTDIR)/usr/share/polkit-1/actions/
+ 	-mkdir -p $(DESTDIR)/usr/share/system-config-selinux
+-	install -m 755 selinux_server.py $(DESTDIR)/usr/share/system-config-selinux
++	install -p -m 755 selinux_server.py $(DESTDIR)/usr/share/system-config-selinux
+ 	install -m 644 *.desktop $(DATADIR)/system-config-selinux
+ 	-mkdir -p $(DESTDIR) $(DATADIR)/pixmaps
+ 	install -m 644 sepolicy_256.png $(DATADIR)/pixmaps/sepolicy.png
+-- 
+1.8.3.1
+
