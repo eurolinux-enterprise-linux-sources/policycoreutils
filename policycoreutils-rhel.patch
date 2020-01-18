@@ -2671,7 +2671,7 @@ index 472785c..f33a0ea 100755
      print(_("Usage %s -l -d user ...") % sys.argv[0])
      print(_("Usage %s -L") % sys.argv[0])
 diff --git policycoreutils-2.5/scripts/fixfiles policycoreutils-2.5/scripts/fixfiles
-index 5c29eb9..401be3f 100755
+index 5c29eb9..3aeda48 100755
 --- policycoreutils-2.5/scripts/fixfiles
 +++ policycoreutils-2.5/scripts/fixfiles
 @@ -116,6 +116,7 @@ exclude_dirs() {
@@ -2722,7 +2722,7 @@ index 5c29eb9..401be3f 100755
      exit $?
  fi
  [ -x /usr/sbin/genhomedircon ] && /usr/sbin/genhomedircon
-@@ -242,7 +248,12 @@ then
+@@ -242,7 +248,13 @@ then
  		echo "${p1}" >> $TEMPFCFILE
  		logit "skipping the directory ${p}"
  	done
@@ -2731,12 +2731,13 @@ index 5c29eb9..401be3f 100755
 +	/bin/cp -p ${FC_SUB_DIST} ${TEMPFCFILE}.subs_dist &>/dev/null || exit
 +	/bin/cp -p ${FC_SUB} ${TEMPFCFILE}.subs &>/dev/null || exit
 +	/bin/cp -p ${FC_HOMEDIRS} ${TEMPFCFILE}.homedirs &>/dev/null || exit
-+	/bin/cp -p ${FC_LOCAL} ${TEMPFCFILE}.local &>/dev/null || exit
++	# file_contexts.local does not always exist
++	/bin/cp -p ${FC_LOCAL} ${TEMPFCFILE}.local &>/dev/null
 +
  fi
  if [ ! -z "$RPMFILES" ]; then
      for i in `echo "$RPMFILES" | sed 's/,/ /g'`; do
-@@ -251,7 +262,7 @@ if [ ! -z "$RPMFILES" ]; then
+@@ -251,7 +263,7 @@ if [ ! -z "$RPMFILES" ]; then
      exit $?
  fi
  if [ ! -z "$FILEPATH" ]; then
@@ -2745,7 +2746,7 @@ index 5c29eb9..401be3f 100755
      return
  fi
  if [  -n "${FILESYSTEMSRW}" ]; then
-@@ -264,15 +275,15 @@ if [ ${OPTION} != "Relabel" ]; then
+@@ -264,15 +276,15 @@ if [ ${OPTION} != "Relabel" ]; then
      return
  fi
  echo "Cleaning up labels on /tmp"

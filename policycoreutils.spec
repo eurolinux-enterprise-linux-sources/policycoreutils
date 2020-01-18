@@ -8,7 +8,7 @@
 Summary: SELinux policy core utilities
 Name:	 policycoreutils
 Version: 2.5
-Release: 29%{?dist}
+Release: 29%{?dist}.1
 License: GPLv2
 Group:	 System Environment/Base
 # https://github.com/SELinuxProject/selinux/wiki/Releases
@@ -390,6 +390,9 @@ The policycoreutils-restorecond package contains the restorecond service.
 %systemd_postun_with_restart restorecond.service
 
 %changelog
+* Wed Jan 16 2019 Vit Mojzis <vmojzis@redhat.com> - 2.5-29.1
+- scripts/fixfiles: Do not fail on file_contexts.local (#1665813)
+
 * Tue Sep 18 2018 Vit Mojzis <vmojzis@redhat.com> - 2.5-29
 - gui: Make all polgen button labels translatable (#1569451)
 - Update translations (#1569451)
