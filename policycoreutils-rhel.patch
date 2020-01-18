@@ -2644,7 +2644,7 @@ index 472785c..f33a0ea 100755
      print(_("Usage %s -l -d user ...") % sys.argv[0])
      print(_("Usage %s -L") % sys.argv[0])
 diff --git policycoreutils-2.5/scripts/fixfiles policycoreutils-2.5/scripts/fixfiles
-index 5c29eb9..bc3124c 100755
+index 5c29eb9..b0c5757 100755
 --- policycoreutils-2.5/scripts/fixfiles
 +++ policycoreutils-2.5/scripts/fixfiles
 @@ -116,6 +116,7 @@ exclude_dirs() {
@@ -2714,7 +2714,7 @@ index 5c29eb9..bc3124c 100755
      return
  fi
  if [  -n "${FILESYSTEMSRW}" ]; then
-@@ -264,7 +273,7 @@ if [ ${OPTION} != "Relabel" ]; then
+@@ -264,15 +273,15 @@ if [ ${OPTION} != "Relabel" ]; then
      return
  fi
  echo "Cleaning up labels on /tmp"
@@ -2723,6 +2723,18 @@ index 5c29eb9..bc3124c 100755
  
  UNDEFINED=`get_undefined_type` || exit $?
  UNLABELED=`get_unlabeled_type` || exit $?
+ find /tmp \( -context "*:${UNLABELED}*" -o -context "*:${UNDEFINED}*" \) \( -type s -o -type p \) -delete
+-find /tmp \( -context "*:${UNLABELED}*" -o -context "*:${UNDEFINED}*" \) -exec chcon --reference /tmp {} \;
+-find /var/tmp \( -context "*:${UNLABELED}*" -o -context "*:${UNDEFINED}*" \) -exec chcon --reference /var/tmp {} \;
+-find /var/run \( -context "*:${UNLABELED}*" -o -context "*:${UNDEFINED}*" \) -exec chcon --reference /var/run {} \;
+-[ ! -e /var/lib/debug ] || find /var/lib/debug \( -context "*:${UNLABELED}*" -o -context "*:${UNDEFINED}*" \) -exec chcon --reference /lib {} \;
++find /tmp \( -context "*:${UNLABELED}*" -o -context "*:${UNDEFINED}*" \) -exec chcon --no-dereference --reference /tmp {} \;
++find /var/tmp \( -context "*:${UNLABELED}*" -o -context "*:${UNDEFINED}*" \) -exec chcon --no-dereference --reference /var/tmp {} \;
++find /var/run \( -context "*:${UNLABELED}*" -o -context "*:${UNDEFINED}*" \) -exec chcon --no-dereference --reference /var/run {} \;
++[ ! -e /var/lib/debug ] || find /var/lib/debug \( -context "*:${UNLABELED}*" -o -context "*:${UNDEFINED}*" \) -exec chcon --no-dereference --reference /lib {} \;
+ exit 0
+ }
+ 
 diff --git policycoreutils-2.5/semanage/Makefile policycoreutils-2.5/semanage/Makefile
 index 60c36a3..c5e4808 100644
 --- policycoreutils-2.5/semanage/Makefile
@@ -2882,7 +2894,7 @@ index 0000000..e2befdb
 +      packages=["policycoreutils"],
 +)
 diff --git policycoreutils-2.5/semanage/semanage policycoreutils-2.5/semanage/semanage
-index 7489955..0d4faf8 100644
+index 7489955..37b5d70 100644
 --- policycoreutils-2.5/semanage/semanage
 +++ policycoreutils-2.5/semanage/semanage
 @@ -23,6 +23,11 @@
@@ -2897,7 +2909,7 @@ index 7489955..0d4faf8 100644
  import argparse
  import seobject
  import sys
-@@ -45,25 +50,25 @@ except IOError:
+@@ -45,25 +50,31 @@ except IOError:
          __builtin__.__dict__['_'] = unicode
  
  # define custom usages for selected main actions
@@ -2918,6 +2930,12 @@ index 7489955..0d4faf8 100644
  usage_port_dict = {' --add': ('-t TYPE', '-p PROTOCOL', '-r RANGE', '(', 'port_name', '|', 'port_range', ')'), ' --modify': ('-t TYPE', '-p PROTOCOL', '-r RANGE', '(', 'port_name', '|', 'port_range', ')'), ' --delete': ('-p PROTOCOL', '(', 'port_name', '|', 'port_range', ')'), ' --list': ('-C',), ' --extract': ('',), ' --deleteall': ('',)}
  
 -usage_node = "semanage node [-h] [-n] [-N] [-s STORE] ["
++usage_ibpkey = "semanage ibpkey [-h] [-n] [-N] [-s STORE] ["
++usage_ibpkey_dict = {' --add': ('-t TYPE', '-x SUBNET_PREFIX', '-r RANGE', '(', 'ibpkey_name', '|', 'pkey_range', ')'), ' --modify': ('-t TYPE', '-x SUBNET_PREFIX', '-r RANGE', '(', 'ibpkey_name', '|', 'pkey_range', ')'), ' --delete': ('-x SUBNET_PREFIX', '(', 'ibpkey_name', '|', 'pkey_range', ')'), ' --list': ('-C',), ' --extract': ('',), ' --deleteall': ('',)}
++
++usage_ibendport = "semanage ibendport [-h] [-n] [-N] [-s STORE] ["
++usage_ibendport_dict = {' --add': ('-t TYPE', '-z IBDEV_NAME', '-r RANGE', '(', 'port', ')'), ' --modify': ('-t TYPE', '-z IBDEV_NAME', '-r RANGE', '(', 'port', ')'), ' --delete': ('-z IBDEV_NAME', '-r RANGE''(', 'port', ')'), ' --list': ('-C',), ' --extract': ('',), ' --deleteall': ('',)}
++
 +usage_node = "semanage node [-h] [-n] [-N] [-S STORE] ["
  usage_node_dict = {' --add': ('-M NETMASK', '-p PROTOCOL', '-t TYPE', '-r RANGE', 'node'), ' --modify': ('-M NETMASK', '-p PROTOCOL', '-t TYPE', '-r RANGE', 'node'), ' --delete': ('-M NETMASK', '-p PROTOCOL', 'node'), ' --list': ('-C',), ' --extract': ('',), ' --deleteall': ('',)}
  
@@ -2930,7 +2948,28 @@ index 7489955..0d4faf8 100644
  usage_boolean_dict = {' --modify': ('(', '--on', '|', '--off', ')', 'boolean'), ' --list': ('-C',), '  --extract': ('',), ' --deleteall': ('',)}
  
  import sepolicy
-@@ -186,7 +191,7 @@ object_dict = {'login': login_ini, 'user': user_ini, 'port': port_ini, 'module':
+@@ -144,6 +155,13 @@ def port_ini():
+     OBJECT = seobject.portRecords(store)
+     return OBJECT
+ 
++def ibpkey_ini():
++    OBJECT = seobject.ibpkeyRecords(store)
++    return OBJECT
++
++def ibendport_ini():
++    OBJECT = seobject.ibendportRecords(store)
++    return OBJECT
+ 
+ def module_ini():
+     OBJECT = seobject.moduleRecords(store)
+@@ -180,13 +198,12 @@ def dontaudit_ini():
+     return OBJECT
+ 
+ # define dictonary for seobject OBEJCTS
+-object_dict = {'login': login_ini, 'user': user_ini, 'port': port_ini, 'module': module_ini, 'interface': interface_ini, 'node': node_ini, 'fcontext': fcontext_ini, 'boolean': boolean_ini, 'permissive': permissive_ini, 'dontaudit': dontaudit_ini}
+-
++object_dict = {'login': login_ini, 'user': user_ini, 'port': port_ini, 'module': module_ini, 'interface': interface_ini, 'node': node_ini, 'fcontext': fcontext_ini, 'boolean': boolean_ini, 'permissive': permissive_ini, 'dontaudit': dontaudit_ini, 'ibpkey': ibpkey_ini, 'ibendport': ibendport_ini}
+ 
  def generate_custom_usage(usage_text, usage_dict):
      # generate custom usage from given text and dictonary
      sorted_keys = []
@@ -2939,7 +2978,7 @@ index 7489955..0d4faf8 100644
          sorted_keys.append(i)
      sorted_keys.sort()
      for k in sorted_keys:
-@@ -202,7 +207,7 @@ def handle_opts(args, dict, target_key):
+@@ -202,7 +219,7 @@ def handle_opts(args, dict, target_key):
      # {action:[conflict_opts,require_opts]}
  
      # first we need to catch conflicts
@@ -2948,7 +2987,7 @@ index 7489955..0d4faf8 100644
          try:
              if k in dict[target_key][0] and args.__dict__[k]:
                  print("%s option can not be used with --%s" % (target_key, k))
-@@ -210,7 +215,7 @@ def handle_opts(args, dict, target_key):
+@@ -210,7 +227,7 @@ def handle_opts(args, dict, target_key):
          except KeyError:
              continue
  
@@ -2957,7 +2996,7 @@ index 7489955..0d4faf8 100644
          try:
              if k in dict[target_key][1] and not args.__dict__[k]:
                  print("%s option is needed for %s" % (k, target_key))
-@@ -272,16 +277,15 @@ def parser_add_type(parser, name):
+@@ -272,16 +289,15 @@ def parser_add_type(parser, name):
  
  
  def parser_add_level(parser, name):
@@ -2976,7 +3015,141 @@ index 7489955..0d4faf8 100644
  '''))
  
  
-@@ -524,7 +528,7 @@ def handleInterface(args):
+@@ -291,6 +307,15 @@ def parser_add_proto(parser, name):
+     version for the specified node (ipv4|ipv6).
+ '''))
+ 
++def parser_add_subnet_prefix(parser, name):
++    parser.add_argument('-x', '--subnet_prefix', help=_('''
++    Subnet prefix for  the specified infiniband ibpkey.
++'''))
++
++def parser_add_ibdev_name(parser, name):
++    parser.add_argument('-z', '--ibdev_name', help=_('''
++    Name for the specified infiniband end port.
++'''))
+ 
+ def parser_add_modify(parser, name):
+     parser.add_argument('-m', '--modify', dest='action', action='store_const', const='modify', help=_("Modify a record of the %s object type") % name)
+@@ -382,13 +407,14 @@ def handleFcontext(args):
+ 
+ def setupFcontextParser(subparsers):
+     ftype_help = '''
+-File Type.   This is used with fcontext.  Requires a  file  type
+-as  shown  in  the  mode  field by ls, e.g. use -d to match only
+-directories or -- to match only regular files. The following
+-file type options can be passed:
+--- (regular file),-d (directory),-c (character device),
+--b (block device),-s (socket),-l (symbolic link),-p (named pipe)
+-If you do not specify a file type, the file type will default to "all files".
++File Type. This is used with fcontext. Requires a file
++type as shown in the mode field by ls, e.g. use 'd' to
++match only directories or 'f' to match only regular
++files. The following file type options can be passed:
++f (regular file),d (directory),c (character device),
++b (block device),s (socket),l (symbolic link),
++p (named pipe). If you do not specify a file type,
++the file type will default to "all files".
+ '''
+     generate_usage = generate_custom_usage(usage_fcontext, usage_fcontext_dict)
+     fcontextParser = subparsers.add_parser('fcontext', usage=generate_usage, help=_("Manage file context mapping definitions"))
+@@ -513,6 +539,95 @@ def setupPortParser(subparsers):
+     portParser.set_defaults(func=handlePort)
+ 
+ 
++
++def handlePkey(args):
++    ibpkey_args = {'list': [('ibpkey', 'type', 'subnet_prefix'), ('')], 'add': [('locallist'), ('type', 'ibpkey', 'subnet_prefix')], 'modify': [('localist'), ('ibpkey', 'subnet_prefix')], 'delete': [('locallist'), ('ibpkey', 'subnet_prefix')], 'extract': [('locallist', 'ibpkey', 'type', 'subnet prefix'), ('')], 'deleteall': [('locallist'), ('')]}
++
++    handle_opts(args, ibpkey_args, args.action)
++
++    OBJECT = object_dict['ibpkey']()
++    OBJECT.set_reload(args.noreload)
++
++    if args.action is "add":
++        OBJECT.add(args.ibpkey, args.subnet_prefix, args.range, args.type)
++    if args.action is "modify":
++        OBJECT.modify(args.ibpkey, args.subnet_prefix, args.range, args.type)
++    if args.action is "delete":
++        OBJECT.delete(args.ibpkey, args.subnet_prefix)
++    if args.action is "list":
++        OBJECT.list(args.noheading, args.locallist)
++    if args.action is "deleteall":
++        OBJECT.deleteall()
++    if args.action is "extract":
++        for i in OBJECT.customized():
++            print("ibpkey %s" % str(i))
++
++
++def setupPkeyParser(subparsers):
++    generated_usage = generate_custom_usage(usage_ibpkey, usage_ibpkey_dict)
++    ibpkeyParser = subparsers.add_parser('ibpkey', usage=generated_usage, help=_('Manage infiniband ibpkey type definitions'))
++    parser_add_locallist(ibpkeyParser, "ibpkey")
++    parser_add_noheading(ibpkeyParser, "ibpkey")
++    parser_add_noreload(ibpkeyParser, "ibpkey")
++    parser_add_store(ibpkeyParser, "ibpkey")
++
++    ibpkey_action = ibpkeyParser.add_mutually_exclusive_group(required=True)
++    parser_add_add(ibpkey_action, "ibpkey")
++    parser_add_delete(ibpkey_action, "ibpkey")
++    parser_add_modify(ibpkey_action, "ibpkey")
++    parser_add_list(ibpkey_action, "ibpkey")
++    parser_add_extract(ibpkey_action, "ibpkey")
++    parser_add_deleteall(ibpkey_action, "ibpkey")
++    parser_add_type(ibpkeyParser, "ibpkey")
++    parser_add_range(ibpkeyParser, "ibpkey")
++    parser_add_subnet_prefix(ibpkeyParser, "ibpkey")
++    ibpkeyParser.add_argument('ibpkey', nargs='?', default=None, help=_('pkey | pkey_range'))
++    ibpkeyParser.set_defaults(func=handlePkey)
++
++def handleIbendport(args):
++    ibendport_args = {'list': [('ibendport', 'type', 'ibdev_name'), ('')], 'add': [('locallist'), ('type', 'ibendport', 'ibdev_name'), ('')], 'modify': [('localist'), ('ibendport', 'ibdev_name')], 'delete': [('locallist'), ('ibendport', 'ibdev_name')], 'extract': [('locallist', 'ibendport', 'type', 'ibdev_name'), ('')], 'deleteall': [('locallist'), ('')]}
++
++    handle_opts(args, ibendport_args, args.action)
++
++    OBJECT = object_dict['ibendport']()
++    OBJECT.set_reload(args.noreload)
++
++    if args.action is "add":
++        OBJECT.add(args.ibendport, args.ibdev_name, args.range, args.type)
++    if args.action is "modify":
++        OBJECT.modify(args.ibendport, args.ibdev_name, args.range, args.type)
++    if args.action is "delete":
++        OBJECT.delete(args.ibendport, args.ibdev_name)
++    if args.action is "list":
++        OBJECT.list(args.noheading, args.locallist)
++    if args.action is "deleteall":
++        OBJECT.deleteall()
++    if args.action is "extract":
++        for i in OBJECT.customized():
++            print("ibendport %s" % str(i))
++
++
++def setupIbendportParser(subparsers):
++    generated_usage = generate_custom_usage(usage_ibendport, usage_ibendport_dict)
++    ibendportParser = subparsers.add_parser('ibendport', usage=generated_usage, help=_('Manage infiniband end port type definitions'))
++    parser_add_locallist(ibendportParser, "ibendport")
++    parser_add_noheading(ibendportParser, "ibendport")
++    parser_add_noreload(ibendportParser, "ibendport")
++    parser_add_store(ibendportParser, "ibendport")
++
++    ibendport_action = ibendportParser.add_mutually_exclusive_group(required=True)
++    parser_add_add(ibendport_action, "ibendport")
++    parser_add_delete(ibendport_action, "ibendport")
++    parser_add_modify(ibendport_action, "ibendport")
++    parser_add_list(ibendport_action, "ibendport")
++    parser_add_extract(ibendport_action, "ibendport")
++    parser_add_deleteall(ibendport_action, "ibendport")
++    parser_add_type(ibendportParser, "ibendport")
++    parser_add_range(ibendportParser, "ibendport")
++    parser_add_ibdev_name(ibendportParser, "ibendport")
++    ibendportParser.add_argument('ibendport', nargs='?', default=None, help=_('ibendport'))
++    ibendportParser.set_defaults(func=handleIbendport)
++
+ def handleInterface(args):
+     interface_args = {'list': [('interface'), ('')], 'add': [('locallist'), ('type', 'interface')], 'modify': [('locallist'), ('type', 'interface')], 'delete': [('locallist'), ('interface')], 'extract': [('locallist', 'interface', 'type'), ('')], 'deleteall': [('locallist'), ('')]}
+ 
+@@ -524,7 +639,7 @@ def handleInterface(args):
      if args.action is "add":
          OBJECT.add(args.interface, args.range, args.type)
      if args.action is "modify":
@@ -2985,7 +3158,7 @@ index 7489955..0d4faf8 100644
      if args.action is "delete":
          OBJECT.delete(args.interface)
      if args.action is "list":
-@@ -607,7 +611,7 @@ def handleNode(args):
+@@ -607,7 +722,7 @@ def handleNode(args):
      if args.action is "add":
          OBJECT.add(args.node, args.netmask, args.proto, args.range, args.type)
      if args.action is "modify":
@@ -2994,7 +3167,7 @@ index 7489955..0d4faf8 100644
      if args.action is "delete":
          OBJECT.delete(args.node, args.netmask, args.proto)
      if args.action is "list":
-@@ -839,7 +843,7 @@ def handleImport(args):
+@@ -839,7 +954,7 @@ def handleImport(args):
  
  
  def setupImportParser(subparsers):
@@ -3003,7 +3176,16 @@ index 7489955..0d4faf8 100644
      parser_add_noreload(importParser, "import")
      parser_add_store(importParser, "import")
      importParser.add_argument('-f', '--input_file', dest='input_file', action=SetImportFile, help=_('Input file'))
-@@ -894,6 +898,8 @@ def make_io_args(args):
+@@ -860,6 +975,8 @@ def createCommandParser():
+     setupLoginParser(subparsers)
+     setupUserParser(subparsers)
+     setupPortParser(subparsers)
++    setupPkeyParser(subparsers)
++    setupIbendportParser(subparsers)
+     setupInterfaceParser(subparsers)
+     setupModuleParser(subparsers)
+     setupNodeParser(subparsers)
+@@ -894,6 +1011,8 @@ def make_io_args(args):
  
  
  def make_args(sys_args):
@@ -3064,6 +3246,150 @@ index 7bbb0af..07c2831 100644
  
  .SH "DESCRIPTION"
  semanage is used to configure certain elements of
+diff --git policycoreutils-2.5/semanage/semanage-ibendport.8 policycoreutils-2.5/semanage/semanage-ibendport.8
+new file mode 100644
+index 0000000..0a29eae
+--- /dev/null
++++ policycoreutils-2.5/semanage/semanage-ibendport.8
+@@ -0,0 +1,66 @@
++.TH "semanage-ibendport" "8" "20170508" "" ""
++.SH "NAME"
++.B semanage\-ibendport \- SELinux Policy Management ibendport mapping tool
++.SH "SYNOPSIS"
++.B semanage ibendport [\-h] [\-n] [\-N] [\-S STORE] [ \-\-add \-t TYPE \-z IBDEV_NAME \-r RANGE port | \-\-delete \-z IBDEV_NAME port | \-\-deleteall  | \-\-extract  | \-\-list [\-C] | \-\-modify \-t TYPE \-z IBDEV_NAME \-r RANGE port ]
++
++.SH "DESCRIPTION"
++semanage is used to configure certain elements of SELinux policy without requiring modification to or recompilation from policy sources.  semanage ibendport controls the ibendport number to ibendport type definitions.
++
++.SH "OPTIONS"
++.TP
++.I  \-h, \-\-help
++show this help message and exit
++.TP
++.I   \-n, \-\-noheading
++Do not print heading when listing the specified object type
++.TP
++.I   \-N, \-\-noreload
++Do not reload policy after commit
++.TP
++.I   \-S STORE, \-\-store STORE
++Select an alternate SELinux Policy Store to manage
++.TP
++.I   \-C, \-\-locallist
++List local customizations
++.TP
++.I   \-a, \-\-add
++Add a record of the specified object type
++.TP
++.I   \-d, \-\-delete
++Delete a record of the specified object type
++.TP
++.I   \-m, \-\-modify
++Modify a record of the specified object type
++.TP
++.I   \-l, \-\-list
++List records of the specified object type
++.TP
++.I   \-E, \-\-extract
++Extract customizable commands, for use within a transaction
++.TP
++.I   \-D, \-\-deleteall
++Remove all local customizations
++.TP
++.I   \-t TYPE, \-\-type TYPE
++SELinux type for the object
++.TP
++.I   \-r RANGE, \-\-range RANGE
++MLS/MCS Security Range (MLS/MCS Systems only) SELinux Range for SELinux login mapping defaults to the SELinux user record range. SELinux Range for SELinux user defaults to s0.
++.TP
++.I \-z IBDEV_NAME, \-\-ibdev_name IBDEV_NAME
++The name of the infiniband device for the port to be labeled.  (ex. mlx5_0)
++
++.SH EXAMPLE
++.nf
++List all ibendport definitions
++# semanage ibendport \-l
++Label mlx4_0 port 2.
++# semanage ibendport \-a \-t allowed_ibendport_t \-z mlx4_0 2
++
++.SH "SEE ALSO"
++.BR selinux (8),
++.BR semanage (8)
++
++.SH "AUTHOR"
++This man page was written by Daniel Jurgens <danielj@mellanox.com>
+diff --git policycoreutils-2.5/semanage/semanage-ibpkey.8 policycoreutils-2.5/semanage/semanage-ibpkey.8
+new file mode 100644
+index 0000000..51f455a
+--- /dev/null
++++ policycoreutils-2.5/semanage/semanage-ibpkey.8
+@@ -0,0 +1,66 @@
++.TH "semanage-ibpkey" "8" "20170508" "" ""
++.SH "NAME"
++.B semanage\-ibpkey \- SELinux Policy Management ibpkey mapping tool
++.SH "SYNOPSIS"
++.B semanage ibpkey [\-h] [\-n] [\-N] [\-S STORE] [ \-\-add \-t TYPE \-x SUBNET_PREFIX \-r RANGE ibpkey_name | ibpkey_range | \-\-delete \-x SUBNET_PREFIX ibpkey_name | ibpkey_range | \-\-deleteall  | \-\-extract  | \-\-list [\-C] | \-\-modify \-t TYPE \-x SUBNET_PREFIX \-r RANGE ibpkey_name | ibpkey_range ]
++
++.SH "DESCRIPTION"
++semanage is used to configure certain elements of SELinux policy without requiring modification to or recompilation from policy sources.  semanage ibpkey controls the ibpkey number to ibpkey type definitions.
++
++.SH "OPTIONS"
++.TP
++.I  \-h, \-\-help
++show this help message and exit
++.TP
++.I   \-n, \-\-noheading
++Do not print heading when listing the specified object type
++.TP
++.I   \-N, \-\-noreload
++Do not reload policy after commit
++.TP
++.I   \-S STORE, \-\-store STORE
++Select an alternate SELinux Policy Store to manage
++.TP
++.I   \-C, \-\-locallist
++List local customizations
++.TP
++.I   \-a, \-\-add
++Add a record of the specified object type
++.TP
++.I   \-d, \-\-delete
++Delete a record of the specified object type
++.TP
++.I   \-m, \-\-modify
++Modify a record of the specified object type
++.TP
++.I   \-l, \-\-list
++List records of the specified object type
++.TP
++.I   \-E, \-\-extract
++Extract customizable commands, for use within a transaction
++.TP
++.I   \-D, \-\-deleteall
++Remove all local customizations
++.TP
++.I   \-t TYPE, \-\-type TYPE
++SELinux type for the object
++.TP
++.I   \-r RANGE, \-\-range RANGE
++MLS/MCS Security Range (MLS/MCS Systems only) SELinux Range for SELinux login mapping defaults to the SELinux user record range. SELinux Range for SELinux user defaults to s0.
++.TP
++.I \-x SUBNET_PREFIX, \-\-subnet_prefix SUBNET_PREFIX
++Subnet prefix for the specified pkey or range of pkeys.
++
++.SH EXAMPLE
++.nf
++List all ibpkey definitions
++# semanage ibpkey \-l
++Label pkey 0x8FFF (limited membership default pkey) as a default pkey type
++# semanage ibpkey \-a \-t default_ibpkey_t \-x fe80:: 0x8FFF
++
++.SH "SEE ALSO"
++.BR selinux (8),
++.BR semanage (8)
++
++.SH "AUTHOR"
++This man page was written by Daniel Jurgens <danielj@mellanox.com>
 diff --git policycoreutils-2.5/semanage/semanage-import.8 policycoreutils-2.5/semanage/semanage-import.8
 index 5437de3..4a9b3e7 100644
 --- policycoreutils-2.5/semanage/semanage-import.8
@@ -3126,10 +3452,10 @@ index 0a2160d..e0b0e56 100644
  .SH "DESCRIPTION"
  semanage is used to configure certain elements of
 diff --git policycoreutils-2.5/semanage/semanage-port.8 policycoreutils-2.5/semanage/semanage-port.8
-index 3f067c5..666120e 100644
+index 3f067c5..397cb00 100644
 --- policycoreutils-2.5/semanage/semanage-port.8
 +++ policycoreutils-2.5/semanage/semanage-port.8
-@@ -2,7 +2,7 @@
+@@ -2,11 +2,14 @@
  .SH "NAME"
  .B semanage\-port \- SELinux Policy Management port mapping tool
  .SH "SYNOPSIS"
@@ -3137,8 +3463,17 @@ index 3f067c5..666120e 100644
 +.B semanage port [\-h] [\-n] [\-N] [\-S STORE] [ \-\-add \-t TYPE \-p PROTOCOL \-r RANGE port_name | port_range | \-\-delete \-p PROTOCOL port_name | port_range | \-\-deleteall  | \-\-extract  | \-\-list [\-C] | \-\-modify \-t TYPE \-p PROTOCOL \-r RANGE port_name | port_range ]
  
  .SH "DESCRIPTION"
- semanage is used to configure certain elements of SELinux policy without requiring modification to or recompilation from policy sources.  semanage port controls the port number to port type definitions.
-@@ -53,7 +53,7 @@ Protocol for the specified port (tcp|udp) or internet protocol version for the s
+-semanage is used to configure certain elements of SELinux policy without requiring modification to or recompilation from policy sources.  semanage port controls the port number to port type definitions.
+-
++semanage is used to configure certain elements of SELinux policy without requiring modification to or recompilation from policy sources. \fBsemanage port\fP controls the port number to port type definitions.
++.TP
++Default port definitions are contained in policy modules and can't be removed without removing corresponding module. Therefore \fBsemanage port\fP uses so called local definitions, which are assigned higher priority and override default definitions for the same port.
++.TP
++\fBsemanage port -l\fP lists all port definitions (both default and local) which can result in seemingly conflicting or duplicate entries. Use \fBsemanage port -l -C\fP to only list local definitions.
+ .SH "OPTIONS"
+ .TP
+ .I  \-h, \-\-help
+@@ -53,7 +56,7 @@ Protocol for the specified port (tcp|udp) or internet protocol version for the s
  
  .SH EXAMPLE
  .nf
@@ -3148,7 +3483,7 @@ index 3f067c5..666120e 100644
  Allow Apache to listen on tcp port 81
  # semanage port \-a \-t http_port_t \-p tcp 81
 diff --git policycoreutils-2.5/semanage/semanage-user.8 policycoreutils-2.5/semanage/semanage-user.8
-index 0e29334..2df03dd 100644
+index 0e29334..288ae0c 100644
 --- policycoreutils-2.5/semanage/semanage-user.8
 +++ policycoreutils-2.5/semanage/semanage-user.8
 @@ -2,7 +2,7 @@
@@ -3160,11 +3495,41 @@ index 0e29334..2df03dd 100644
  
  .SH "DESCRIPTION"
  semanage is used to configure certain elements of
+@@ -62,6 +62,23 @@ Modify groups for staff_u user
+ Add level for TopSecret Users
+ # semanage user \-a \-R "staff_r" \-rs0\-TopSecret topsecret_u
+ 
++.SH "NOTES"
++SELinux users defined in the policy cannot be removed or directly altered. When the 
++.I -m
++switch is used on such a user, semanage creates a local SELinux user of the same name, which overrides the original SELinux user.
++.P
++As long as a login entry exists that links local SELinux user to a Linux user, given local SELinux user cannot be removed (even if it represents local modification of a SELinux user defined in policy).
++In case you want to remove local modification of a SELinux user, you need to remove any related login mapping first. Follow these steps:
++.IP
++.nf
++1) Remove all login entries concerning the SELinux user.
++   To list local customizations of login entries execute:
++   # semanage login -l -C
++   or for semanage command form:
++   # semanage login --extract
++2) Remove the SELinux user
++3) Optionally reintroduce removed login entries
++
+ .SH "SEE ALSO"
+ .B selinux (8),
+ .B semanage (8)
 diff --git policycoreutils-2.5/semanage/semanage.8 policycoreutils-2.5/semanage/semanage.8
-index 0fad36c..75b782f 100644
+index 0fad36c..6032b41 100644
 --- policycoreutils-2.5/semanage/semanage.8
 +++ policycoreutils-2.5/semanage/semanage.8
-@@ -8,7 +8,7 @@ semanage \- SELinux Policy Management tool
+@@ -3,12 +3,12 @@
+ semanage \- SELinux Policy Management tool
+ 
+ .SH "SYNOPSIS"
+-.B semanage                {import,export,login,user,port,interface,module,node,fcontext,boolean,permissive,dontaudit}
++.B semanage                {import,export,login,user,port,interface,module,node,fcontext,boolean,permissive,dontaudit,ibpkey,ibendport}
+                 ...
  .B positional arguments:
  
  .B    import
@@ -3173,21 +3538,46 @@ index 0fad36c..75b782f 100644
  
  .B    export
  Output local customizations
-@@ -51,8 +51,7 @@ to SELinux user identities (which controls the initial security context
+@@ -43,6 +43,12 @@ Manage process type enforcement mode
+ .B    dontaudit
+ Disable/Enable dontaudit rules in policy
+ 
++.B    ibpkey
++Manage infiniband pkey type definitions
++
++.B    ibendport
++Manage infiniband end port type definitions
++
+ .SH "DESCRIPTION"
+ semanage is used to configure certain elements of
+ SELinux policy without requiring modification to or recompilation
+@@ -50,9 +56,9 @@ from policy sources.  This includes the mapping from Linux usernames
+ to SELinux user identities (which controls the initial security context
  assigned to Linux users when they login and bounds their authorized role set)
  as well as security context mappings for various kinds of objects, such
- as network ports, interfaces, and nodes (hosts) as well as the file
+-as network ports, interfaces, and nodes (hosts) as well as the file
 -context mapping. See the EXAMPLES section below for some examples
 -of common usage.  Note that the semanage login command deals with the
-+context mapping. Note that the semanage login command deals with the
++as network ports, interfaces, infiniband pkeys and endports, and nodes (hosts)
++as well as the file context mapping. See the EXAMPLES section below for some
++examples of common usage.  Note that the semanage login command deals with the
  mapping from Linux usernames (logins) to SELinux user identities,
  while the semanage user command deals with the mapping from SELinux
  user identities to authorized role sets.  In most cases, only the
+@@ -79,6 +85,8 @@ List help information
+ .B semanage-permissive (8),
+ .B semanage-port (8),
+ .B semanage-user (8)
++.B semanage-ibkey (8),
++.B semanage-ibendport (8),
+ 
+ .SH "AUTHOR"
+ This man page was written by Daniel Walsh <dwalsh@redhat.com>
 diff --git policycoreutils-2.5/semanage/seobject.py policycoreutils-2.5/semanage/seobject.py
-index 3b0b108..6eb93fd 100644
+index 3b0b108..91a1841 100644
 --- policycoreutils-2.5/semanage/seobject.py
 +++ policycoreutils-2.5/semanage/seobject.py
-@@ -30,7 +30,7 @@ import os
+@@ -30,12 +30,13 @@ import os
  import re
  import sys
  import stat
@@ -3196,7 +3586,13 @@ index 3b0b108..6eb93fd 100644
  from semanage import *
  PROGNAME = "policycoreutils"
  import sepolicy
-@@ -79,9 +79,20 @@ file_type_str_to_option = {"all files": "a",
+ from sepolicy import boolean_desc, boolean_category, gen_bool_dict
+ gen_bool_dict()
++import setools
+ from IPy import IP
+ 
+ import gettext
+@@ -79,9 +80,20 @@ file_type_str_to_option = {"all files": "a",
                             "directory": "d",
                             "character device": "c",
                             "block device": "b",
@@ -3218,7 +3614,7 @@ index 3b0b108..6eb93fd 100644
  try:
      import audit
  
-@@ -90,6 +101,7 @@ try:
+@@ -90,6 +102,7 @@ try:
          def __init__(self):
              self.audit_fd = audit.audit_open()
              self.log_list = []
@@ -3226,7 +3622,7 @@ index 3b0b108..6eb93fd 100644
  
          def log(self, msg, name="", sename="", serole="", serange="", oldsename="", oldserole="", oldserange=""):
  
-@@ -109,10 +121,17 @@ try:
+@@ -109,10 +122,17 @@ try:
          def log_remove(self, msg, name="", sename="", serole="", serange="", oldsename="", oldserole="", oldserange=""):
              self.log_list.append([self.audit_fd, audit.AUDIT_ROLE_REMOVE, sys.argv[0], str(msg), name, 0, sename, serole, serange, oldsename, oldserole, oldserange, "", "", ""])
  
@@ -3244,7 +3640,7 @@ index 3b0b108..6eb93fd 100644
  except:
      class logger:
  
-@@ -138,6 +157,9 @@ except:
+@@ -138,6 +158,9 @@ except:
          def log_remove(self, msg, name="", sename="", serole="", serange="", oldsename="", oldserole="", oldserange=""):
              self.log(msg, name, sename, serole, serange, oldsename, oldserole, oldserange)
  
@@ -3254,7 +3650,7 @@ index 3b0b108..6eb93fd 100644
          def commit(self, success):
              if success == 1:
                  message = "Successful: "
-@@ -155,6 +177,9 @@ class nulllogger:
+@@ -155,6 +178,9 @@ class nulllogger:
      def log_remove(self, msg, name="", sename="", serole="", serange="", oldsename="", oldserole="", oldserange=""):
          pass
  
@@ -3264,7 +3660,7 @@ index 3b0b108..6eb93fd 100644
      def commit(self, success):
          pass
  
-@@ -1109,6 +1134,8 @@ class portRecords(semanageRecords):
+@@ -1109,6 +1135,8 @@ class portRecords(semanageRecords):
          semanage_port_key_free(k)
          semanage_port_free(p)
  
@@ -3273,7 +3669,7 @@ index 3b0b108..6eb93fd 100644
      def add(self, port, proto, serange, type):
          self.begin()
          self.__add(port, proto, serange, type)
-@@ -1138,8 +1165,11 @@ class portRecords(semanageRecords):
+@@ -1138,8 +1166,11 @@ class portRecords(semanageRecords):
  
          con = semanage_port_get_con(p)
  
@@ -3287,7 +3683,7 @@ index 3b0b108..6eb93fd 100644
          if setype != "":
              semanage_context_set_type(self.sh, con, setype)
  
-@@ -1150,6 +1180,8 @@ class portRecords(semanageRecords):
+@@ -1150,6 +1181,8 @@ class portRecords(semanageRecords):
          semanage_port_key_free(k)
          semanage_port_free(p)
  
@@ -3296,7 +3692,7 @@ index 3b0b108..6eb93fd 100644
      def modify(self, port, proto, serange, setype):
          self.begin()
          self.__modify(port, proto, serange, setype)
-@@ -1168,6 +1200,7 @@ class portRecords(semanageRecords):
+@@ -1168,6 +1201,7 @@ class portRecords(semanageRecords):
              low = semanage_port_get_low(port)
              high = semanage_port_get_high(port)
              port_str = "%s-%s" % (low, high)
@@ -3304,7 +3700,7 @@ index 3b0b108..6eb93fd 100644
              (k, proto_d, low, high) = self.__genkey(port_str, proto_str)
              if rc < 0:
                  raise ValueError(_("Could not create a key for %s") % port_str)
-@@ -1177,6 +1210,11 @@ class portRecords(semanageRecords):
+@@ -1177,6 +1211,11 @@ class portRecords(semanageRecords):
                  raise ValueError(_("Could not delete the port %s") % port_str)
              semanage_port_key_free(k)
  
@@ -3316,7 +3712,7 @@ index 3b0b108..6eb93fd 100644
          self.commit()
  
      def __delete(self, port, proto):
-@@ -1199,6 +1237,8 @@ class portRecords(semanageRecords):
+@@ -1199,6 +1238,8 @@ class portRecords(semanageRecords):
  
          semanage_port_key_free(k)
  
@@ -3325,7 +3721,507 @@ index 3b0b108..6eb93fd 100644
      def delete(self, port, proto):
          self.begin()
          self.__delete(port, proto)
-@@ -1380,6 +1420,8 @@ class nodeRecords(semanageRecords):
+@@ -1276,6 +1317,499 @@ class portRecords(semanageRecords):
+                 rec += ", %s" % p
+             print rec
+ 
++class ibpkeyRecords(semanageRecords):
++    try:
++        q = setools.TypeQuery(setools.SELinuxPolicy(sepolicy.get_installed_policy()), attrs=["ibpkey_type"])
++        valid_types = sorted(str(t) for t in q.results())
++    except:
++        valid_types = []
++
++    def __init__(self, store=""):
++        semanageRecords.__init__(self, store)
++
++    def __genkey(self, pkey, subnet_prefix):
++   if subnet_prefix == "":
++            raise ValueError(_("Subnet Prefix is required"))
++
++   pkeys = pkey.split("-")
++        if len(pkeys) == 1:
++            high = low = int(pkeys[0], 0)
++        else:
++            low = int(pkeys[0], 0)
++            high = int(pkeys[1], 0)
++
++        if high > 65535:
++            raise ValueError(_("Invalid Pkey"))
++
++        (rc, k) = semanage_ibpkey_key_create(self.sh, subnet_prefix, low, high)
++        if rc < 0:
++            raise ValueError(_("Could not create a key for %s/%s") % (subnet_prefix, pkey))
++        return (k, subnet_prefix, low, high)
++
++    def __add(self, pkey, subnet_prefix, serange, type):
++        if is_mls_enabled == 1:
++            if serange == "":
++                serange = "s0"
++            else:
++                serange = untranslate(serange)
++
++        if type == "":
++            raise ValueError(_("Type is required"))
++
++        if type not in self.valid_types:
++            raise ValueError(_("Type %s is invalid, must be a ibpkey type") % type)
++
++        (k, subnet_prefix, low, high) = self.__genkey(pkey, subnet_prefix)
++
++        (rc, exists) = semanage_ibpkey_exists(self.sh, k)
++        if rc < 0:
++            raise ValueError(_("Could not check if ibpkey %s/%s is defined") % (subnet_prefix, pkey))
++        if exists:
++            raise ValueError(_("ibpkey %s/%s already defined") % (subnet_prefix, pkey))
++
++        (rc, p) = semanage_ibpkey_create(self.sh)
++        if rc < 0:
++            raise ValueError(_("Could not create ibpkey for %s/%s") % (subnet_prefix, pkey))
++
++        semanage_ibpkey_set_subnet_prefix(self.sh, p, subnet_prefix)
++        semanage_ibpkey_set_range(p, low, high)
++        (rc, con) = semanage_context_create(self.sh)
++        if rc < 0:
++            raise ValueError(_("Could not create context for %s/%s") % (subnet_prefix, pkey))
++
++        rc = semanage_context_set_user(self.sh, con, "system_u")
++        if rc < 0:
++            raise ValueError(_("Could not set user in ibpkey context for %s/%s") % (subnet_prefix, pkey))
++
++        rc = semanage_context_set_role(self.sh, con, "object_r")
++        if rc < 0:
++            raise ValueError(_("Could not set role in ibpkey context for %s/%s") % (subnet_prefix, pkey))
++
++        rc = semanage_context_set_type(self.sh, con, type)
++        if rc < 0:
++            raise ValueError(_("Could not set type in ibpkey context for %s/%s") % (subnet_prefix, pkey))
++
++        if (is_mls_enabled == 1) and (serange != ""):
++            rc = semanage_context_set_mls(self.sh, con, serange)
++            if rc < 0:
++                raise ValueError(_("Could not set mls fields in ibpkey context for %s/%s") % (subnet_prefix, pkey))
++
++        rc = semanage_ibpkey_set_con(self.sh, p, con)
++        if rc < 0:
++            raise ValueError(_("Could not set ibpkey context for %s/%s") % (subnet_prefix, pkey))
++
++        rc = semanage_ibpkey_modify_local(self.sh, k, p)
++        if rc < 0:
++            raise ValueError(_("Could not add ibpkey %s/%s") % (subnet_prefix, pkey))
++
++        semanage_context_free(con)
++        semanage_ibpkey_key_free(k)
++        semanage_ibpkey_free(p)
++
++    def add(self, pkey, subnet_prefix, serange, type):
++        self.begin()
++        self.__add(pkey, subnet_prefix, serange, type)
++        self.commit()
++
++    def __modify(self, pkey, subnet_prefix, serange, setype):
++        if serange == "" and setype == "":
++            if is_mls_enabled == 1:
++                raise ValueError(_("Requires setype or serange"))
++            else:
++                raise ValueError(_("Requires setype"))
++
++        if setype and setype not in self.valid_types:
++            raise ValueError(_("Type %s is invalid, must be a ibpkey type") % setype)
++
++        (k, subnet_prefix, low, high) = self.__genkey(pkey, subnet_prefix)
++
++        (rc, exists) = semanage_ibpkey_exists(self.sh, k)
++        if rc < 0:
++            raise ValueError(_("Could not check if ibpkey %s/%s is defined") % (subnet_prefix, pkey))
++        if not exists:
++            raise ValueError(_("ibpkey %s/%s is not defined") % (subnet_prefix, pkey))
++
++        (rc, p) = semanage_ibpkey_query(self.sh, k)
++        if rc < 0:
++            raise ValueError(_("Could not query ibpkey %s/%s") % (subnet_prefix, pkey))
++
++        con = semanage_ibpkey_get_con(p)
++
++        if (is_mls_enabled == 1) and (serange != ""):
++            semanage_context_set_mls(self.sh, con, untranslate(serange))
++        if setype != "":
++            semanage_context_set_type(self.sh, con, setype)
++
++        rc = semanage_ibpkey_modify_local(self.sh, k, p)
++        if rc < 0:
++            raise ValueError(_("Could not modify ibpkey %s/%s") % (subnet_prefix, pkey))
++
++        semanage_ibpkey_key_free(k)
++        semanage_ibpkey_free(p)
++
++    def modify(self, pkey, subnet_prefix, serange, setype):
++        self.begin()
++        self.__modify(pkey, subnet_prefix, serange, setype)
++        self.commit()
++
++    def deleteall(self):
++        (rc, plist) = semanage_ibpkey_list_local(self.sh)
++        if rc < 0:
++            raise ValueError(_("Could not list the ibpkeys"))
++
++        self.begin()
++
++        for ibpkey in plist:
++            (rc, subnet_prefix) = semanage_ibpkey_get_subnet_prefix(self.sh, ibpkey)
++            low = semanage_ibpkey_get_low(ibpkey)
++            high = semanage_ibpkey_get_high(ibpkey)
++            pkey_str = "%s-%s" % (low, high)
++            (k, subnet_prefix, low, high) = self.__genkey(pkey_str, subnet_prefix)
++            if rc < 0:
++                raise ValueError(_("Could not create a key for %s") % pkey_str)
++
++            rc = semanage_ibpkey_del_local(self.sh, k)
++            if rc < 0:
++                raise ValueError(_("Could not delete the ibpkey %s") % pkey_str)
++            semanage_ibpkey_key_free(k)
++
++        self.commit()
++
++    def __delete(self, pkey, subnet_prefix):
++        (k, subnet_prefix, low, high) = self.__genkey(pkey, subnet_prefix)
++        (rc, exists) = semanage_ibpkey_exists(self.sh, k)
++        if rc < 0:
++            raise ValueError(_("Could not check if ibpkey %s/%s is defined") % (subnet_prefix, pkey))
++        if not exists:
++            raise ValueError(_("ibpkey %s/%s is not defined") % (subnet_prefix, pkey))
++
++        (rc, exists) = semanage_ibpkey_exists_local(self.sh, k)
++        if rc < 0:
++            raise ValueError(_("Could not check if ibpkey %s/%s is defined") % (subnet_prefix, pkey))
++        if not exists:
++            raise ValueError(_("ibpkey %s/%s is defined in policy, cannot be deleted") % (subnet_prefix, pkey))
++
++        rc = semanage_ibpkey_del_local(self.sh, k)
++        if rc < 0:
++            raise ValueError(_("Could not delete ibpkey %s/%s") % (subnet_prefix, pkey))
++
++        semanage_ibpkey_key_free(k)
++
++    def delete(self, pkey, subnet_prefix):
++        self.begin()
++        self.__delete(pkey, subnet_prefix)
++        self.commit()
++
++    def get_all(self, locallist=0):
++        ddict = {}
++        if locallist:
++            (rc, self.plist) = semanage_ibpkey_list_local(self.sh)
++        else:
++            (rc, self.plist) = semanage_ibpkey_list(self.sh)
++        if rc < 0:
++            raise ValueError(_("Could not list ibpkeys"))
++
++        for ibpkey in self.plist:
++            con = semanage_ibpkey_get_con(ibpkey)
++            ctype = semanage_context_get_type(con)
++            if ctype == "reserved_ibpkey_t":
++                continue
++            level = semanage_context_get_mls(con)
++            (rc, subnet_prefix) = semanage_ibpkey_get_subnet_prefix(self.sh, ibpkey)
++            low = semanage_ibpkey_get_low(ibpkey)
++            high = semanage_ibpkey_get_high(ibpkey)
++            ddict[(low, high, subnet_prefix)] = (ctype, level)
++        return ddict
++
++    def get_all_by_type(self, locallist=0):
++        ddict = {}
++        if locallist:
++            (rc, self.plist) = semanage_ibpkey_list_local(self.sh)
++        else:
++            (rc, self.plist) = semanage_ibpkey_list(self.sh)
++        if rc < 0:
++            raise ValueError(_("Could not list ibpkeys"))
++
++        for ibpkey in self.plist:
++            con = semanage_ibpkey_get_con(ibpkey)
++            ctype = semanage_context_get_type(con)
++            (rc, subnet_prefix) = semanage_ibpkey_get_subnet_prefix(self.sh, ibpkey)
++            low = semanage_ibpkey_get_low(ibpkey)
++            high = semanage_ibpkey_get_high(ibpkey)
++            if (ctype, subnet_prefix) not in ddict.keys():
++                ddict[(ctype, subnet_prefix)] = []
++            if low == high:
++                ddict[(ctype, subnet_prefix)].append("0x%x" % low)
++            else:
++                ddict[(ctype, subnet_prefix)].append("0x%x-0x%x" % (low, high))
++        return ddict
++
++    def customized(self):
++        l = []
++        ddict = self.get_all(True)
++        keys = ddict.keys()
++        keys.sort()
++        for k in keys:
++            if k[0] == k[1]:
++                l.append("-a -t %s -x %s %s" % (ddict[k][0], k[2], k[0]))
++            else:
++                l.append("-a -t %s -x %s %s-%s" % (ddict[k][0], k[2], k[0], k[1]))
++        return l
++
++    def list(self, heading=1, locallist=0):
++        ddict = self.get_all_by_type(locallist)
++        keys = ddict.keys()
++        if len(keys) == 0:
++            return
++        keys.sort()
++
++        if heading:
++            print "%-30s %-18s %s\n" % (_("SELinux IB Pkey Type"), _("Subnet_Prefix"), _("Pkey Number"))
++        for i in keys:
++            rec = "%-30s %-18s " % i
++            rec += "%s" % ddict[i][0]
++            for p in ddict[i][1:]:
++                rec += ", %s" % p
++            print rec
++
++class ibendportRecords(semanageRecords):
++    try:
++        q = setools.TypeQuery(setools.SELinuxPolicy(sepolicy.get_installed_policy()), attrs=["ibendport_type"])
++        valid_types = set(str(t) for t in q.results())
++    except:
++        valid_types = []
++
++    def __init__(self, store=""):
++        semanageRecords.__init__(self, store)
++
++    def __genkey(self, ibendport, ibdev_name):
++	if ibdev_name == "":
++            raise ValueError(_("IB device name is required"))
++
++        port = int(ibendport)
++
++        if port > 255 or port < 1:
++            raise ValueError(_("Invalid Port Number"))
++
++        (rc, k) = semanage_ibendport_key_create(self.sh, ibdev_name, port)
++        if rc < 0:
++            raise ValueError(_("Could not create a key for ibendport %s/%s") % (ibdev_name, ibendport))
++        return (k, ibdev_name, port)
++
++    def __add(self, ibendport, ibdev_name, serange, type):
++        if is_mls_enabled == 1:
++            if serange == "":
++                serange = "s0"
++            else:
++                serange = untranslate(serange)
++
++        if type == "":
++            raise ValueError(_("Type is required"))
++
++        if type not in self.valid_types:
++            raise ValueError(_("Type %s is invalid, must be an ibendport type") % type)
++        (k, ibendport, port) = self.__genkey(ibendport, ibdev_name)
++
++        (rc, exists) = semanage_ibendport_exists(self.sh, k)
++        if rc < 0:
++            raise ValueError(_("Could not check if ibendport %s/%s is defined") % (ibdev_name, port))
++        if exists:
++            raise ValueError(_("ibendport %s/%s already defined") % (ibdev_name, port))
++
++        (rc, p) = semanage_ibendport_create(self.sh)
++        if rc < 0:
++            raise ValueError(_("Could not create ibendport for %s/%s") % (ibdev_name, port))
++
++        semanage_ibendport_set_ibdev_name(self.sh, p, ibdev_name)
++        semanage_ibendport_set_port(p, port)
++        (rc, con) = semanage_context_create(self.sh)
++        if rc < 0:
++            raise ValueError(_("Could not create context for %s/%s") % (ibdev_name, port))
++
++        rc = semanage_context_set_user(self.sh, con, "system_u")
++        if rc < 0:
++            raise ValueError(_("Could not set user in ibendport context for %s/%s") % (ibdev_name, port))
++
++        rc = semanage_context_set_role(self.sh, con, "object_r")
++        if rc < 0:
++            raise ValueError(_("Could not set role in ibendport context for %s/%s") % (ibdev_name, port))
++
++        rc = semanage_context_set_type(self.sh, con, type)
++        if rc < 0:
++            raise ValueError(_("Could not set type in ibendport context for %s/%s") % (ibdev_name, port))
++
++        if (is_mls_enabled == 1) and (serange != ""):
++            rc = semanage_context_set_mls(self.sh, con, serange)
++            if rc < 0:
++                raise ValueError(_("Could not set mls fields in ibendport context for %s/%s") % (ibdev_name, port))
++
++        rc = semanage_ibendport_set_con(self.sh, p, con)
++        if rc < 0:
++            raise ValueError(_("Could not set ibendport context for %s/%s") % (ibdev_name, port))
++
++        rc = semanage_ibendport_modify_local(self.sh, k, p)
++        if rc < 0:
++            raise ValueError(_("Could not add ibendport %s/%s") % (ibdev_name, port))
++
++        semanage_context_free(con)
++        semanage_ibendport_key_free(k)
++        semanage_ibendport_free(p)
++
++    def add(self, ibendport, ibdev_name, serange, type):
++        self.begin()
++        self.__add(ibendport, ibdev_name, serange, type)
++        self.commit()
++
++    def __modify(self, ibendport, ibdev_name, serange, setype):
++        if serange == "" and setype == "":
++            if is_mls_enabled == 1:
++                raise ValueError(_("Requires setype or serange"))
++            else:
++                raise ValueError(_("Requires setype"))
++
++        if setype and setype not in self.valid_types:
++            raise ValueError(_("Type %s is invalid, must be an ibendport type") % setype)
++
++        (k, ibdev_name, port) = self.__genkey(ibendport, ibdev_name)
++
++        (rc, exists) = semanage_ibendport_exists(self.sh, k)
++        if rc < 0:
++            raise ValueError(_("Could not check if ibendport %s/%s is defined") % (ibdev_name, ibendport))
++        if not exists:
++            raise ValueError(_("ibendport %s/%s is not defined") % (ibdev_name, ibendport))
++
++        (rc, p) = semanage_ibendport_query(self.sh, k)
++        if rc < 0:
++            raise ValueError(_("Could not query ibendport %s/%s") % (ibdev_name, ibendport))
++
++        con = semanage_ibendport_get_con(p)
++
++        if (is_mls_enabled == 1) and (serange != ""):
++            semanage_context_set_mls(self.sh, con, untranslate(serange))
++        if setype != "":
++            semanage_context_set_type(self.sh, con, setype)
++
++        rc = semanage_ibendport_modify_local(self.sh, k, p)
++        if rc < 0:
++            raise ValueError(_("Could not modify ibendport %s/%s") % (ibdev_name, ibendport))
++
++        semanage_ibendport_key_free(k)
++        semanage_ibendport_free(p)
++
++    def modify(self, ibendport, ibdev_name, serange, setype):
++        self.begin()
++        self.__modify(ibendport, ibdev_name, serange, setype)
++        self.commit()
++
++    def deleteall(self):
++        (rc, plist) = semanage_ibendport_list_local(self.sh)
++        if rc < 0:
++            raise ValueError(_("Could not list the ibendports"))
++
++        self.begin()
++
++        for ibendport in plist:
++            (rc, ibdev_name) = semanage_ibendport_get_ibdev_name(self.sh, ibendport)
++            port = semanage_ibendport_get_port(ibendport)
++            (k, ibdev_name, port) = self.__genkey(str(port), ibdev_name)
++            if rc < 0:
++                raise ValueError(_("Could not create a key for %s/%d") % (ibdevname, port))
++
++            rc = semanage_ibendport_del_local(self.sh, k)
++            if rc < 0:
++                raise ValueError(_("Could not delete the ibendport %s/%d") % (ibdev_name, port))
++            semanage_ibendport_key_free(k)
++
++        self.commit()
++
++    def __delete(self, ibendport, ibdev_name):
++        (k, ibdev_name, port) = self.__genkey(ibendport, ibdev_name)
++        (rc, exists) = semanage_ibendport_exists(self.sh, k)
++        if rc < 0:
++            raise ValueError(_("Could not check if ibendport %s/%s is defined") % (ibdev_name, ibendport))
++        if not exists:
++            raise ValueError(_("ibendport %s/%s is not defined") % (ibdev_name, ibendport))
++
++        (rc, exists) = semanage_ibendport_exists_local(self.sh, k)
++        if rc < 0:
++            raise ValueError(_("Could not check if ibendport %s/%s is defined") % (ibdev_name, ibendport))
++        if not exists:
++            raise ValueError(_("ibendport %s/%s is defined in policy, cannot be deleted") % (ibdev_name, ibendport))
++
++        rc = semanage_ibendport_del_local(self.sh, k)
++        if rc < 0:
++            raise ValueError(_("Could not delete ibendport %s/%s") % (ibdev_name, ibendport))
++
++        semanage_ibendport_key_free(k)
++
++    def delete(self, ibendport, ibdev_name):
++        self.begin()
++        self.__delete(ibendport, ibdev_name)
++        self.commit()
++
++    def get_all(self, locallist=0):
++        ddict = {}
++        if locallist:
++            (rc, self.plist) = semanage_ibendport_list_local(self.sh)
++        else:
++            (rc, self.plist) = semanage_ibendport_list(self.sh)
++        if rc < 0:
++            raise ValueError(_("Could not list ibendports"))
++
++        for ibendport in self.plist:
++            con = semanage_ibendport_get_con(ibendport)
++            ctype = semanage_context_get_type(con)
++            if ctype == "reserved_ibendport_t":
++                continue
++            level = semanage_context_get_mls(con)
++            (rc, ibdev_name) = semanage_ibendport_get_ibdev_name(self.sh, ibendport)
++            port = semanage_ibendport_get_port(ibendport)
++            ddict[(port, ibdev_name)] = (ctype, level)
++        return ddict
++
++    def get_all_by_type(self, locallist=0):
++        ddict = {}
++        if locallist:
++            (rc, self.plist) = semanage_ibendport_list_local(self.sh)
++        else:
++            (rc, self.plist) = semanage_ibendport_list(self.sh)
++        if rc < 0:
++            raise ValueError(_("Could not list ibendports"))
++
++        for ibendport in self.plist:
++            con = semanage_ibendport_get_con(ibendport)
++            ctype = semanage_context_get_type(con)
++            (rc, ibdev_name) = semanage_ibendport_get_ibdev_name(self.sh, ibendport)
++            port = semanage_ibendport_get_port(ibendport)
++            if (ctype, ibdev_name) not in ddict.keys():
++                ddict[(ctype, ibdev_name)] = []
++            ddict[(ctype, ibdev_name)].append("0x%x" % port)
++        return ddict
++
++    def customized(self):
++        l = []
++        ddict = self.get_all(True)
++        keys = ddict.keys()
++        keys.sort()
++        for k in keys:
++            l.append("-a -t %s -r %s -z %s %s" % (ddict[k][0], ddict[k][1], k[1], k[0]))
++        return l
++
++    def list(self, heading=1, locallist=0):
++        ddict = self.get_all_by_type(locallist)
++        keys = ddict.keys()
++        if len(keys) == 0:
++            return
++        keys.sort()
++
++        if heading:
++            print "%-30s %-18s %s\n" % (_("SELinux IB End Port Type"), _("IB Device Name"), _("Port Number"))
++        for i in keys:
++            rec = "%-30s %-18s " % i
++            rec += "%s" % ddict[i][0]
++            for p in ddict[i][1:]:
++                rec += ", %s" % p
++            print rec
+ 
+ class nodeRecords(semanageRecords):
+     try:
+@@ -1380,6 +1914,8 @@ class nodeRecords(semanageRecords):
          semanage_node_key_free(k)
          semanage_node_free(node)
  
@@ -3334,7 +4230,7 @@ index 3b0b108..6eb93fd 100644
      def add(self, addr, mask, proto, serange, ctype):
          self.begin()
          self.__add(addr, mask, proto, serange, ctype)
-@@ -1421,6 +1463,8 @@ class nodeRecords(semanageRecords):
+@@ -1421,6 +1957,8 @@ class nodeRecords(semanageRecords):
          semanage_node_key_free(k)
          semanage_node_free(node)
  
@@ -3343,7 +4239,7 @@ index 3b0b108..6eb93fd 100644
      def modify(self, addr, mask, proto, serange, setype):
          self.begin()
          self.__modify(addr, mask, proto, serange, setype)
-@@ -1452,6 +1496,8 @@ class nodeRecords(semanageRecords):
+@@ -1452,6 +1990,8 @@ class nodeRecords(semanageRecords):
  
          semanage_node_key_free(k)
  
@@ -3352,7 +4248,7 @@ index 3b0b108..6eb93fd 100644
      def delete(self, addr, mask, proto):
          self.begin()
          self.__delete(addr, mask, proto)
-@@ -1581,6 +1627,8 @@ class interfaceRecords(semanageRecords):
+@@ -1581,6 +2121,8 @@ class interfaceRecords(semanageRecords):
          semanage_iface_key_free(k)
          semanage_iface_free(iface)
  
@@ -3361,7 +4257,7 @@ index 3b0b108..6eb93fd 100644
      def add(self, interface, serange, ctype):
          self.begin()
          self.__add(interface, serange, ctype)
-@@ -1618,6 +1666,8 @@ class interfaceRecords(semanageRecords):
+@@ -1618,6 +2160,8 @@ class interfaceRecords(semanageRecords):
          semanage_iface_key_free(k)
          semanage_iface_free(iface)
  
@@ -3370,7 +4266,7 @@ index 3b0b108..6eb93fd 100644
      def modify(self, interface, serange, setype):
          self.begin()
          self.__modify(interface, serange, setype)
-@@ -1646,6 +1696,8 @@ class interfaceRecords(semanageRecords):
+@@ -1646,6 +2190,8 @@ class interfaceRecords(semanageRecords):
  
          semanage_iface_key_free(k)
  
@@ -3379,7 +4275,7 @@ index 3b0b108..6eb93fd 100644
      def delete(self, interface):
          self.begin()
          self.__delete(interface)
-@@ -1775,6 +1827,8 @@ class fcontextRecords(semanageRecords):
+@@ -1775,6 +2321,8 @@ class fcontextRecords(semanageRecords):
                  if i.startswith(target + "/"):
                      raise ValueError(_("File spec %s conflicts with equivalency rule '%s %s'") % (target, i, fdict[i]))
  
@@ -3388,7 +4284,7 @@ index 3b0b108..6eb93fd 100644
          self.equiv[target] = substitute
          self.equal_ind = True
          self.commit()
-@@ -1785,6 +1839,9 @@ class fcontextRecords(semanageRecords):
+@@ -1785,6 +2333,9 @@ class fcontextRecords(semanageRecords):
              raise ValueError(_("Equivalence class for %s does not exists") % target)
          self.equiv[target] = substitute
          self.equal_ind = True
@@ -3398,7 +4294,7 @@ index 3b0b108..6eb93fd 100644
          self.commit()
  
      def createcon(self, target, seuser="system_u"):
-@@ -1879,6 +1936,11 @@ class fcontextRecords(semanageRecords):
+@@ -1879,6 +2430,11 @@ class fcontextRecords(semanageRecords):
          semanage_fcontext_key_free(k)
          semanage_fcontext_free(fcontext)
  
@@ -3410,7 +4306,7 @@ index 3b0b108..6eb93fd 100644
      def add(self, target, type, ftype="", serange="", seuser="system_u"):
          self.begin()
          self.__add(target, type, ftype, serange, seuser)
-@@ -1888,7 +1950,7 @@ class fcontextRecords(semanageRecords):
+@@ -1888,7 +2444,7 @@ class fcontextRecords(semanageRecords):
          if serange == "" and setype == "" and seuser == "":
              raise ValueError(_("Requires setype, serange or seuser"))
          if setype and setype not in self.valid_types:
@@ -3419,7 +4315,7 @@ index 3b0b108..6eb93fd 100644
  
          self.validate(target)
  
-@@ -1904,10 +1966,12 @@ class fcontextRecords(semanageRecords):
+@@ -1904,10 +2460,12 @@ class fcontextRecords(semanageRecords):
              if not exists:
                  raise ValueError(_("File context for %s is not defined") % target)
  
@@ -3436,7 +4332,7 @@ index 3b0b108..6eb93fd 100644
                  raise ValueError(_("Could not query file context for %s") % target)
  
          if setype != "<<none>>":
-@@ -1939,6 +2003,11 @@ class fcontextRecords(semanageRecords):
+@@ -1939,6 +2497,11 @@ class fcontextRecords(semanageRecords):
          semanage_fcontext_key_free(k)
          semanage_fcontext_free(fcontext)
  
@@ -3448,7 +4344,7 @@ index 3b0b108..6eb93fd 100644
      def modify(self, target, setype, ftype, serange, seuser):
          self.begin()
          self.__modify(target, setype, ftype, serange, seuser)
-@@ -1964,6 +2033,8 @@ class fcontextRecords(semanageRecords):
+@@ -1964,6 +2527,8 @@ class fcontextRecords(semanageRecords):
                  raise ValueError(_("Could not delete the file context %s") % target)
              semanage_fcontext_key_free(k)
  
@@ -3457,7 +4353,7 @@ index 3b0b108..6eb93fd 100644
          self.equiv = {}
          self.equal_ind = True
          self.commit()
-@@ -1972,6 +2043,9 @@ class fcontextRecords(semanageRecords):
+@@ -1972,6 +2537,9 @@ class fcontextRecords(semanageRecords):
          if target in self.equiv.keys():
              self.equiv.pop(target)
              self.equal_ind = True
@@ -3467,7 +4363,7 @@ index 3b0b108..6eb93fd 100644
              return
  
          (rc, k) = semanage_fcontext_key_create(self.sh, target, file_types[ftype])
-@@ -1996,6 +2070,8 @@ class fcontextRecords(semanageRecords):
+@@ -1996,6 +2564,8 @@ class fcontextRecords(semanageRecords):
  
          semanage_fcontext_key_free(k)
  
@@ -3476,12 +4372,28 @@ index 3b0b108..6eb93fd 100644
      def delete(self, target, ftype):
          self.begin()
          self.__delete(target, ftype)
+@@ -2009,10 +2579,15 @@ class fcontextRecords(semanageRecords):
+             if rc < 0:
+                 raise ValueError(_("Could not list file contexts"))
+ 
++            (rc, fchomedirs) = semanage_fcontext_list_homedirs(self.sh)
++            if rc < 0:
++                raise ValueError(_("Could not list file contexts for home directories"))
++
+             (rc, fclocal) = semanage_fcontext_list_local(self.sh)
+             if rc < 0:
+                 raise ValueError(_("Could not list local file contexts"))
+ 
++            self.flist += fchomedirs
+             self.flist += fclocal
+ 
+         ddict = {}
 diff --git policycoreutils-2.5/semanage/seobject/__init__.py policycoreutils-2.5/semanage/seobject/__init__.py
 new file mode 100644
-index 0000000..238726d
+index 0000000..e268122
 --- /dev/null
 +++ policycoreutils-2.5/semanage/seobject/__init__.py
-@@ -0,0 +1,2342 @@
+@@ -0,0 +1,2839 @@
 +#! /usr/bin/python -Es
 +# Copyright (C) 2005-2013 Red Hat
 +# see file 'COPYING' for use and warranty information
@@ -3719,7 +4631,7 @@ index 0000000..238726d
 +
 +        def __init__(self, store):
 +               global handle
-+               self.load = True
++               self.noreload = False
 +               self.sh = self.get_handle(store)
 +
 +               rc, localstore = selinux.selinux_getpolicytype()
@@ -3729,7 +4641,8 @@ index 0000000..238726d
 +                       self.mylog = nulllogger()
 +
 +        def set_reload(self, load):
-+               self.load = load
++               if not load:
++                        self.noreload = True
 +
 +        def get_handle(self, store):
 +                global is_mls_enabled
@@ -3790,7 +4703,8 @@ index 0000000..238726d
 +                if semanageRecords.transaction:
 +                        return
 +
-+                semanage_set_reload(self.sh, self.load)
++                if self.noreload:
++                        semanage_set_reload(self.sh, 0)
 +                rc = semanage_commit(self.sh)
 +                if rc < 0:
 +                        self.mylog.commit(0)
@@ -4812,6 +5726,498 @@ index 0000000..238726d
 +                                rec += ", %s" % p
 +                        print(rec)
 +
++class ibpkeyRecords(semanageRecords):
++        try:
++                valid_types = set(str(t) for t in sepolicy.info(sepolicy.ATTRIBUTE, "ibpkey_type")[0]["types"])
++        except:
++                valid_types = []
++
++        def __init__(self, store=""):
++                semanageRecords.__init__(self, store)
++
++        def __genkey(self, pkey, subnet_prefix):
++                if subnet_prefix == "":
++                        raise ValueError(_("Subnet Prefix is required"))
++
++                pkeys = pkey.split("-")
++                if len(pkeys) == 1:
++                        high = low = int(pkeys[0], 0)
++                else:
++                        low = int(pkeys[0], 0)
++                        high = int(pkeys[1], 0)
++
++                if high > 65535:
++                        raise ValueError(_("Invalid Pkey"))
++
++                (rc, k) = semanage_ibpkey_key_create(self.sh, subnet_prefix, low, high)
++                if rc < 0:
++                        raise ValueError(_("Could not create a key for %s/%s") % (subnet_prefix, pkey))
++                return (k, subnet_prefix, low, high)
++
++        def __add(self, pkey, subnet_prefix, serange, type):
++                if is_mls_enabled == 1:
++                        if serange == "":
++                                serange = "s0"
++                        else:
++                                serange = untranslate(serange)
++
++                if type == "":
++                        raise ValueError(_("Type is required"))
++
++                if type not in self.valid_types:
++                        raise ValueError(_("Type %s is invalid, must be a ibpkey type") % type)
++
++                (k, subnet_prefix, low, high) = self.__genkey(pkey, subnet_prefix)
++
++                (rc, exists) = semanage_ibpkey_exists(self.sh, k)
++                if rc < 0:
++                        raise ValueError(_("Could not check if ibpkey %s/%s is defined") % (subnet_prefix, pkey))
++                if exists:
++                        raise ValueError(_("ibpkey %s/%s already defined") % (subnet_prefix, pkey))
++
++                (rc, p) = semanage_ibpkey_create(self.sh)
++                if rc < 0:
++                        raise ValueError(_("Could not create ibpkey for %s/%s") % (subnet_prefix, pkey))
++
++                semanage_ibpkey_set_subnet_prefix(self.sh, p, subnet_prefix)
++                semanage_ibpkey_set_range(p, low, high)
++                (rc, con) = semanage_context_create(self.sh)
++                if rc < 0:
++                        raise ValueError(_("Could not create context for %s/%s") % (subnet_prefix, pkey))
++
++                rc = semanage_context_set_user(self.sh, con, "system_u")
++                if rc < 0:
++                        raise ValueError(_("Could not set user in ibpkey context for %s/%s") % (subnet_prefix, pkey))
++
++                rc = semanage_context_set_role(self.sh, con, "object_r")
++                if rc < 0:
++                        raise ValueError(_("Could not set role in ibpkey context for %s/%s") % (subnet_prefix, pkey))
++
++                rc = semanage_context_set_type(self.sh, con, type)
++                if rc < 0:
++                        raise ValueError(_("Could not set type in ibpkey context for %s/%s") % (subnet_prefix, pkey))
++
++                if (is_mls_enabled == 1) and (serange != ""):
++                        rc = semanage_context_set_mls(self.sh, con, serange)
++                        if rc < 0:
++                                raise ValueError(_("Could not set mls fields in ibpkey context for %s/%s") % (subnet_prefix, pkey))
++
++                rc = semanage_ibpkey_set_con(self.sh, p, con)
++                if rc < 0:
++                        raise ValueError(_("Could not set ibpkey context for %s/%s") % (subnet_prefix, pkey))
++
++                rc = semanage_ibpkey_modify_local(self.sh, k, p)
++                if rc < 0:
++                        raise ValueError(_("Could not add ibpkey %s/%s") % (subnet_prefix, pkey))
++
++                semanage_context_free(con)
++                semanage_ibpkey_key_free(k)
++                semanage_ibpkey_free(p)
++
++        def add(self, pkey, subnet_prefix, serange, type):
++                self.begin()
++                self.__add(pkey, subnet_prefix, serange, type)
++                self.commit()
++
++        def __modify(self, pkey, subnet_prefix, serange, setype):
++                if serange == "" and setype == "":
++                        if is_mls_enabled == 1:
++                                raise ValueError(_("Requires setype or serange"))
++                        else:
++                                raise ValueError(_("Requires setype"))
++
++                if setype and setype not in self.valid_types:
++                        raise ValueError(_("Type %s is invalid, must be a ibpkey type") % setype)
++
++                (k, subnet_prefix, low, high) = self.__genkey(pkey, subnet_prefix)
++
++                (rc, exists) = semanage_ibpkey_exists(self.sh, k)
++                if rc < 0:
++                        raise ValueError(_("Could not check if ibpkey %s/%s is defined") % (subnet_prefix, pkey))
++                if not exists:
++                        raise ValueError(_("ibpkey %s/%s is not defined") % (subnet_prefix, pkey))
++
++                (rc, p) = semanage_ibpkey_query(self.sh, k)
++                if rc < 0:
++                        raise ValueError(_("Could not query ibpkey %s/%s") % (subnet_prefix, pkey))
++
++                con = semanage_ibpkey_get_con(p)
++
++                if (is_mls_enabled == 1) and (serange != ""):
++                        semanage_context_set_mls(self.sh, con, untranslate(serange))
++                if setype != "":
++                        semanage_context_set_type(self.sh, con, setype)
++
++                rc = semanage_ibpkey_modify_local(self.sh, k, p)
++                if rc < 0:
++                        raise ValueError(_("Could not modify ibpkey %s/%s") % (subnet_prefix, pkey))
++
++                semanage_ibpkey_key_free(k)
++                semanage_ibpkey_free(p)
++
++        def modify(self, pkey, subnet_prefix, serange, setype):
++                self.begin()
++                self.__modify(pkey, subnet_prefix, serange, setype)
++                self.commit()
++
++        def deleteall(self):
++                (rc, plist) = semanage_ibpkey_list_local(self.sh)
++                if rc < 0:
++                        raise ValueError(_("Could not list the ibpkeys"))
++
++                self.begin()
++
++                for ibpkey in plist:
++                        (rc, subnet_prefix) = semanage_ibpkey_get_subnet_prefix(self.sh, ibpkey)
++                        low = semanage_ibpkey_get_low(ibpkey)
++                        high = semanage_ibpkey_get_high(ibpkey)
++                        pkey_str = "%s-%s" % (low, high)
++                        (k, subnet_prefix, low, high) = self.__genkey(pkey_str, subnet_prefix)
++                        if rc < 0:
++                                raise ValueError(_("Could not create a key for %s") % pkey_str)
++
++                        rc = semanage_ibpkey_del_local(self.sh, k)
++                        if rc < 0:
++                                raise ValueError(_("Could not delete the ibpkey %s") % pkey_str)
++                        semanage_ibpkey_key_free(k)
++
++                self.commit()
++
++        def __delete(self, pkey, subnet_prefix):
++                (k, subnet_prefix, low, high) = self.__genkey(pkey, subnet_prefix)
++                (rc, exists) = semanage_ibpkey_exists(self.sh, k)
++                if rc < 0:
++                        raise ValueError(_("Could not check if ibpkey %s/%s is defined") % (subnet_prefix, pkey))
++                if not exists:
++                        raise ValueError(_("ibpkey %s/%s is not defined") % (subnet_prefix, pkey))
++
++                (rc, exists) = semanage_ibpkey_exists_local(self.sh, k)
++                if rc < 0:
++                        raise ValueError(_("Could not check if ibpkey %s/%s is defined") % (subnet_prefix, pkey))
++                if not exists:
++                        raise ValueError(_("ibpkey %s/%s is defined in policy, cannot be deleted") % (subnet_prefix, pkey))
++
++                rc = semanage_ibpkey_del_local(self.sh, k)
++                if rc < 0:
++                        raise ValueError(_("Could not delete ibpkey %s/%s") % (subnet_prefix, pkey))
++
++                semanage_ibpkey_key_free(k)
++
++        def delete(self, pkey, subnet_prefix):
++                self.begin()
++                self.__delete(pkey, subnet_prefix)
++                self.commit()
++
++        def get_all(self, locallist=0):
++                ddict = {}
++                if locallist:
++                        (rc, self.plist) = semanage_ibpkey_list_local(self.sh)
++                else:
++                        (rc, self.plist) = semanage_ibpkey_list(self.sh)
++                if rc < 0:
++                        raise ValueError(_("Could not list ibpkeys"))
++
++                for ibpkey in self.plist:
++                        con = semanage_ibpkey_get_con(ibpkey)
++                        ctype = semanage_context_get_type(con)
++                        if ctype == "reserved_ibpkey_t":
++                                continue
++                        level = semanage_context_get_mls(con)
++                        (rc, subnet_prefix) = semanage_ibpkey_get_subnet_prefix(self.sh, ibpkey)
++                        low = semanage_ibpkey_get_low(ibpkey)
++                        high = semanage_ibpkey_get_high(ibpkey)
++                        ddict[(low, high, subnet_prefix)] = (ctype, level)
++                return ddict
++
++        def get_all_by_type(self, locallist=0):
++                ddict = {}
++                if locallist:
++                        (rc, self.plist) = semanage_ibpkey_list_local(self.sh)
++                else:
++                        (rc, self.plist) = semanage_ibpkey_list(self.sh)
++                if rc < 0:
++                        raise ValueError(_("Could not list ibpkeys"))
++
++                for ibpkey in self.plist:
++                        con = semanage_ibpkey_get_con(ibpkey)
++                        ctype = semanage_context_get_type(con)
++                        (rc, subnet_prefix) = semanage_ibpkey_get_subnet_prefix(self.sh, ibpkey)
++                        low = semanage_ibpkey_get_low(ibpkey)
++                        high = semanage_ibpkey_get_high(ibpkey)
++                        if (ctype, subnet_prefix) not in ddict.keys():
++                                ddict[(ctype, subnet_prefix)] = []
++                        if low == high:
++                                ddict[(ctype, subnet_prefix)].append("0x%x" % low)
++                        else:
++                                ddict[(ctype, subnet_prefix)].append("0x%x-0x%x" % (low, high))
++                return ddict
++
++        def customized(self):
++                l = []
++                ddict = self.get_all(True)
++                keys = ddict.keys()
++                keys.sort()
++                for k in keys:
++                        if k[0] == k[1]:
++                                l.append("-a -t %s -x %s %s" % (ddict[k][0], k[2], k[0]))
++                        else:
++                                l.append("-a -t %s -x %s %s-%s" % (ddict[k][0], k[2], k[0], k[1]))
++                return l
++
++        def list(self, heading=1, locallist=0):
++                ddict = self.get_all_by_type(locallist)
++                keys = ddict.keys()
++                if len(keys) == 0:
++                        return
++                keys.sort()
++
++                if heading:
++                        print "%-30s %-18s %s\n" % (_("SELinux IB Pkey Type"), _("Subnet_Prefix"), _("Pkey Number"))
++                for i in keys:
++                        rec = "%-30s %-18s " % i
++                        rec += "%s" % ddict[i][0]
++                        for p in ddict[i][1:]:
++                                rec += ", %s" % p
++                        print rec
++
++class ibendportRecords(semanageRecords):
++        try:
++                valid_types = set(str(t) for t in sepolicy.info(sepolicy.ATTRIBUTE, "ibendport_type")[0]["types"])
++        except:
++                valid_types = []
++
++        def __init__(self, store=""):
++                semanageRecords.__init__(self, store)
++
++        def __genkey(self, ibendport, ibdev_name):
++                if ibdev_name == "":
++                        raise ValueError(_("IB device name is required"))
++
++                port = int(ibendport)
++
++                if port > 255 or port < 1:
++                        raise ValueError(_("Invalid Port Number"))
++
++                (rc, k) = semanage_ibendport_key_create(self.sh, ibdev_name, port)
++                if rc < 0:
++                        raise ValueError(_("Could not create a key for ibendport %s/%s") % (ibdev_name, ibendport))
++                return (k, ibdev_name, port)
++
++        def __add(self, ibendport, ibdev_name, serange, type):
++                if is_mls_enabled == 1:
++                        if serange == "":
++                                serange = "s0"
++                        else:
++                                serange = untranslate(serange)
++
++                if type == "":
++                        raise ValueError(_("Type is required"))
++
++                if type not in self.valid_types:
++                        raise ValueError(_("Type %s is invalid, must be an ibendport type") % type)
++                (k, ibendport, port) = self.__genkey(ibendport, ibdev_name)
++
++                (rc, exists) = semanage_ibendport_exists(self.sh, k)
++                if rc < 0:
++                        raise ValueError(_("Could not check if ibendport %s/%s is defined") % (ibdev_name, port))
++                if exists:
++                        raise ValueError(_("ibendport %s/%s already defined") % (ibdev_name, port))
++
++                (rc, p) = semanage_ibendport_create(self.sh)
++                if rc < 0:
++                        raise ValueError(_("Could not create ibendport for %s/%s") % (ibdev_name, port))
++
++                semanage_ibendport_set_ibdev_name(self.sh, p, ibdev_name)
++                semanage_ibendport_set_port(p, port)
++                (rc, con) = semanage_context_create(self.sh)
++                if rc < 0:
++                        raise ValueError(_("Could not create context for %s/%s") % (ibdev_name, port))
++
++                rc = semanage_context_set_user(self.sh, con, "system_u")
++                if rc < 0:
++                        raise ValueError(_("Could not set user in ibendport context for %s/%s") % (ibdev_name, port))
++
++                rc = semanage_context_set_role(self.sh, con, "object_r")
++                if rc < 0:
++                        raise ValueError(_("Could not set role in ibendport context for %s/%s") % (ibdev_name, port))
++
++                rc = semanage_context_set_type(self.sh, con, type)
++                if rc < 0:
++                        raise ValueError(_("Could not set type in ibendport context for %s/%s") % (ibdev_name, port))
++
++                if (is_mls_enabled == 1) and (serange != ""):
++                        rc = semanage_context_set_mls(self.sh, con, serange)
++                        if rc < 0:
++                                raise ValueError(_("Could not set mls fields in ibendport context for %s/%s") % (ibdev_name, port))
++
++                rc = semanage_ibendport_set_con(self.sh, p, con)
++                if rc < 0:
++                        raise ValueError(_("Could not set ibendport context for %s/%s") % (ibdev_name, port))
++
++                rc = semanage_ibendport_modify_local(self.sh, k, p)
++                if rc < 0:
++                        raise ValueError(_("Could not add ibendport %s/%s") % (ibdev_name, port))
++
++                semanage_context_free(con)
++                semanage_ibendport_key_free(k)
++                semanage_ibendport_free(p)
++
++        def add(self, ibendport, ibdev_name, serange, type):
++                self.begin()
++                self.__add(ibendport, ibdev_name, serange, type)
++                self.commit()
++
++        def __modify(self, ibendport, ibdev_name, serange, setype):
++                if serange == "" and setype == "":
++                        if is_mls_enabled == 1:
++                                raise ValueError(_("Requires setype or serange"))
++                        else:
++                                raise ValueError(_("Requires setype"))
++
++                if setype and setype not in self.valid_types:
++                        raise ValueError(_("Type %s is invalid, must be an ibendport type") % setype)
++
++                (k, ibdev_name, port) = self.__genkey(ibendport, ibdev_name)
++
++                (rc, exists) = semanage_ibendport_exists(self.sh, k)
++                if rc < 0:
++                        raise ValueError(_("Could not check if ibendport %s/%s is defined") % (ibdev_name, ibendport))
++                if not exists:
++                        raise ValueError(_("ibendport %s/%s is not defined") % (ibdev_name, ibendport))
++
++                (rc, p) = semanage_ibendport_query(self.sh, k)
++                if rc < 0:
++                        raise ValueError(_("Could not query ibendport %s/%s") % (ibdev_name, ibendport))
++
++                con = semanage_ibendport_get_con(p)
++
++                if (is_mls_enabled == 1) and (serange != ""):
++                        semanage_context_set_mls(self.sh, con, untranslate(serange))
++                if setype != "":
++                        semanage_context_set_type(self.sh, con, setype)
++
++                rc = semanage_ibendport_modify_local(self.sh, k, p)
++                if rc < 0:
++                        raise ValueError(_("Could not modify ibendport %s/%s") % (ibdev_name, ibendport))
++
++                semanage_ibendport_key_free(k)
++                semanage_ibendport_free(p)
++
++        def modify(self, ibendport, ibdev_name, serange, setype):
++                self.begin()
++                self.__modify(ibendport, ibdev_name, serange, setype)
++                self.commit()
++
++        def deleteall(self):
++                (rc, plist) = semanage_ibendport_list_local(self.sh)
++                if rc < 0:
++                        raise ValueError(_("Could not list the ibendports"))
++
++                self.begin()
++
++                for ibendport in plist:
++                        (rc, ibdev_name) = semanage_ibendport_get_ibdev_name(self.sh, ibendport)
++                        port = semanage_ibendport_get_port(ibendport)
++                        (k, ibdev_name, port) = self.__genkey(str(port), ibdev_name)
++                        if rc < 0:
++                                raise ValueError(_("Could not create a key for %s/%d") % (ibdevname, port))
++
++                        rc = semanage_ibendport_del_local(self.sh, k)
++                        if rc < 0:
++                                raise ValueError(_("Could not delete the ibendport %s/%d") % (ibdev_name, port))
++                        semanage_ibendport_key_free(k)
++
++                self.commit()
++
++        def __delete(self, ibendport, ibdev_name):
++                (k, ibdev_name, port) = self.__genkey(ibendport, ibdev_name)
++                (rc, exists) = semanage_ibendport_exists(self.sh, k)
++                if rc < 0:
++                        raise ValueError(_("Could not check if ibendport %s/%s is defined") % (ibdev_name, ibendport))
++                if not exists:
++                        raise ValueError(_("ibendport %s/%s is not defined") % (ibdev_name, ibendport))
++
++                (rc, exists) = semanage_ibendport_exists_local(self.sh, k)
++                if rc < 0:
++                        raise ValueError(_("Could not check if ibendport %s/%s is defined") % (ibdev_name, ibendport))
++                if not exists:
++                        raise ValueError(_("ibendport %s/%s is defined in policy, cannot be deleted") % (ibdev_name, ibendport))
++
++                rc = semanage_ibendport_del_local(self.sh, k)
++                if rc < 0:
++                        raise ValueError(_("Could not delete ibendport %s/%s") % (ibdev_name, ibendport))
++
++                semanage_ibendport_key_free(k)
++
++        def delete(self, ibendport, ibdev_name):
++                self.begin()
++                self.__delete(ibendport, ibdev_name)
++                self.commit()
++
++        def get_all(self, locallist=0):
++                ddict = {}
++                if locallist:
++                        (rc, self.plist) = semanage_ibendport_list_local(self.sh)
++                else:
++                        (rc, self.plist) = semanage_ibendport_list(self.sh)
++                if rc < 0:
++                        raise ValueError(_("Could not list ibendports"))
++
++                for ibendport in self.plist:
++                        con = semanage_ibendport_get_con(ibendport)
++                        ctype = semanage_context_get_type(con)
++                        if ctype == "reserved_ibendport_t":
++                                continue
++                        level = semanage_context_get_mls(con)
++                        (rc, ibdev_name) = semanage_ibendport_get_ibdev_name(self.sh, ibendport)
++                        port = semanage_ibendport_get_port(ibendport)
++                        ddict[(port, ibdev_name)] = (ctype, level)
++                return ddict
++
++        def get_all_by_type(self, locallist=0):
++                ddict = {}
++                if locallist:
++                        (rc, self.plist) = semanage_ibendport_list_local(self.sh)
++                else:
++                        (rc, self.plist) = semanage_ibendport_list(self.sh)
++                if rc < 0:
++                        raise ValueError(_("Could not list ibendports"))
++
++                for ibendport in self.plist:
++                        con = semanage_ibendport_get_con(ibendport)
++                        ctype = semanage_context_get_type(con)
++                        (rc, ibdev_name) = semanage_ibendport_get_ibdev_name(self.sh, ibendport)
++                        port = semanage_ibendport_get_port(ibendport)
++                        if (ctype, ibdev_name) not in ddict.keys():
++                                ddict[(ctype, ibdev_name)] = []
++                        ddict[(ctype, ibdev_name)].append("0x%x" % port)
++                return ddict
++
++        def customized(self):
++                l = []
++                ddict = self.get_all(True)
++                keys = ddict.keys()
++                keys.sort()
++                for k in keys:
++                        l.append("-a -t %s -r %s -z %s %s" % (ddict[k][0], ddict[k][1], k[1], k[0]))
++                return l
++
++        def list(self, heading=1, locallist=0):
++                ddict = self.get_all_by_type(locallist)
++                keys = ddict.keys()
++                if len(keys) == 0:
++                        return
++                keys.sort()
++
++                if heading:
++                        print "%-30s %-18s %s\n" % (_("SELinux IB End Port Type"), _("IB Device Name"), _("Port Number"))
++                for i in keys:
++                        rec = "%-30s %-18s " % i
++                        rec += "%s" % ddict[i][0]
++                        for p in ddict[i][1:]:
++                                rec += ", %s" % p
++                        print rec
++
 +class nodeRecords(semanageRecords):
 +       try:
 +               valid_types =  sepolicy.info(sepolicy.ATTRIBUTE, "node_type")[0]["types"]
@@ -5585,11 +6991,14 @@ index 0000000..238726d
 +                       (rc, self.flist) = semanage_fcontext_list(self.sh)
 +                       if rc < 0:
 +                              raise ValueError(_("Could not list file contexts"))
-+
++                       (rc, fchomedirs) = semanage_fcontext_list_homedirs(self.sh)
++                       if rc < 0:
++                              raise ValueError(_("Could not list file contexts for home directories"))
 +                       (rc, fclocal) = semanage_fcontext_list_local(self.sh)
 +                       if rc < 0:
 +                              raise ValueError(_("Could not list local file contexts"))
 +
++                       self.flist += fchomedirs
 +                       self.flist += fclocal
 +
 +                from collections import OrderedDict
@@ -5866,12 +7275,15 @@ index 0000000..7735c59
 +      packages=["seobject"],
 +)
 diff --git policycoreutils-2.5/semodule/semodule.8 policycoreutils-2.5/semodule/semodule.8
-index 6db390c..0c5fdf7 100644
+index 6db390c..7dd95ef 100644
 --- policycoreutils-2.5/semodule/semodule.8
 +++ policycoreutils-2.5/semodule/semodule.8
-@@ -38,7 +38,7 @@ deprecated, alias for --install
+@@ -36,9 +36,9 @@ deprecated, alias for --install
+ deprecated, alias for --install
+ .TP
  .B  \-r,\-\-remove=MODULE_NAME
- remove existing module
+-remove existing module
++remove existing module at desired priority (defaults to -X 400)
  .TP
 -.B  \-l,\-\-list-modules=[KIND]
 +.B  \-l[KIND],\-\-list-modules[=KIND]
@@ -5893,7 +7305,24 @@ index 6db390c..0c5fdf7 100644
  
  .SH EXAMPLE
  .nf
-@@ -114,14 +116,14 @@ $ semodule \-d alsa
+@@ -101,6 +103,10 @@ $ semodule \-b base.pp
+ $ semodule \-i httpd.pp
+ # List non-base modules.
+ $ semodule \-l
++# List all modules including priorities
++$ semodule \-lfull
++# Remove a module at priority 100
++$ semodule \-X 100 \-r wireshark
+ # Turn on all AVC Messages for which SELinux currently is "dontaudit"ing.
+ $ semodule \-DB
+ # Turn "dontaudit" rules back on.
+@@ -109,19 +115,19 @@ $ semodule \-B
+ $ semodule \-i *.pp
+ # Install or replace all modules in the current directory.
+ $ ls *.pp | grep \-Ev "base.pp|enableaudit.pp" | xargs /usr/sbin/semodule \-b base.pp \-i
+-# Disable a module.
++# Disable a module (all instances of given module across priorities will be disabled).
+ $ semodule \-d alsa
  # Install a module at a specific priority.
  $ semodule \-X 100 \-i alsa.pp
  # List all modules.
@@ -5911,14 +7340,16 @@ index 6db390c..0c5fdf7 100644
  
  .SH SEE ALSO
 diff --git policycoreutils-2.5/semodule/semodule.c policycoreutils-2.5/semodule/semodule.c
-index bcfaa2b..7b763fd 100644
+index bcfaa2b..311d6de 100644
 --- policycoreutils-2.5/semodule/semodule.c
 +++ policycoreutils-2.5/semodule/semodule.c
-@@ -127,7 +127,7 @@ static void usage(char *progname)
+@@ -126,8 +126,8 @@ static void usage(char *progname)
+ 	printf("  -R, --reload		    reload policy\n");
  	printf("  -B, --build		    build and reload policy\n");
  	printf("  -i,--install=MODULE_PKG   install a new module\n");
- 	printf("  -r,--remove=MODULE_NAME   remove existing module\n");
+-	printf("  -r,--remove=MODULE_NAME   remove existing module\n");
 -	printf("  -l,--list-modules=[KIND]  display list of installed modules\n");
++	printf("  -r,--remove=MODULE_NAME   remove existing module at desired priority\n");
 +	printf("  -l[KIND],--list-modules[=KIND]  display list of installed modules\n");
  	printf("     KIND:  standard  list highest priority, enabled modules\n");
  	printf("            full      list all modules\n");
@@ -6942,15 +8373,16 @@ index 7d57f6e..6ae1da6 100755
 +        print("Out")
          sys.exit(0)
 diff --git policycoreutils-2.5/sepolicy/sepolicy/__init__.py policycoreutils-2.5/sepolicy/sepolicy/__init__.py
-index 693c6fe..f4384cc 100644
+index 693c6fe..19a0008 100644
 --- policycoreutils-2.5/sepolicy/sepolicy/__init__.py
 +++ policycoreutils-2.5/sepolicy/sepolicy/__init__.py
-@@ -3,24 +3,29 @@
+@@ -3,24 +3,30 @@
  # Author: Dan Walsh <dwalsh@redhat.com>
  # Author: Ryan Hallisey <rhallise@redhat.com>
  
 -import _policy
 +from . import policy as _policy
++import errno
  import selinux
  import glob
  PROGNAME = "policycoreutils"
@@ -6980,7 +8412,7 @@ index 693c6fe..f4384cc 100644
  
  TYPE = _policy.TYPE
  ROLE = _policy.ROLE
-@@ -29,6 +34,8 @@ PORT = _policy.PORT
+@@ -29,6 +35,8 @@ PORT = _policy.PORT
  USER = _policy.USER
  BOOLEAN = _policy.BOOLEAN
  TCLASS = _policy.CLASS
@@ -6989,7 +8421,7 @@ index 693c6fe..f4384cc 100644
  
  ALLOW = 'allow'
  AUDITALLOW = 'auditallow'
-@@ -47,8 +54,12 @@ def info(setype, name=None):
+@@ -47,8 +55,12 @@ def info(setype, name=None):
      return dict_list
  
  
@@ -7004,7 +8436,7 @@ index 693c6fe..f4384cc 100644
      valid_types = [ALLOW, AUDITALLOW, NEVERALLOW, DONTAUDIT, TRANSITION, ROLE_ALLOW]
      for setype in types:
          if setype not in valid_types:
-@@ -62,7 +73,7 @@ def search(types, info={}):
+@@ -62,7 +74,7 @@ def search(types, info={}):
  
      dict_list = _policy.search(seinfo)
      if dict_list and len(perms) != 0:
@@ -7013,7 +8445,7 @@ index 693c6fe..f4384cc 100644
      return dict_list
  
  
-@@ -79,7 +90,7 @@ def get_conditionals(src, dest, tclass, perm):
+@@ -79,7 +91,7 @@ def get_conditionals(src, dest, tclass, perm):
                  allows = []
                  allows.append(i)
      try:
@@ -7022,7 +8454,7 @@ index 693c6fe..f4384cc 100644
              tdict.update({'source': i['source'], 'boolean': i['boolean']})
              if tdict not in tlist:
                  tlist.append(tdict)
-@@ -91,13 +102,49 @@ def get_conditionals(src, dest, tclass, perm):
+@@ -91,13 +103,49 @@ def get_conditionals(src, dest, tclass, perm):
  
  
  def get_conditionals_format_text(cond):
@@ -7074,7 +8506,7 @@ index 693c6fe..f4384cc 100644
  file_type_str = {}
  file_type_str["a"] = _("all files")
  file_type_str["f"] = _("regular file")
-@@ -119,6 +166,46 @@ trans_file_type_str["-l"] = "l"
+@@ -119,6 +167,46 @@ trans_file_type_str["-l"] = "l"
  trans_file_type_str["-p"] = "p"
  
  
@@ -7121,7 +8553,7 @@ index 693c6fe..f4384cc 100644
  def get_file_types(setype):
      flist = []
      mpaths = {}
-@@ -181,7 +268,7 @@ def find_file(reg):
+@@ -181,7 +269,7 @@ def find_file(reg):
      try:
          pat = re.compile(r"%s$" % reg)
      except:
@@ -7130,7 +8562,7 @@ index 693c6fe..f4384cc 100644
          return []
      p = reg
      if p.endswith("(/.*)?"):
-@@ -193,12 +280,12 @@ def find_file(reg):
+@@ -193,12 +281,12 @@ def find_file(reg):
          if path[-1] != "/":    # is pass in it breaks without try block
              path += "/"
      except IndexError:
@@ -7145,7 +8577,7 @@ index 693c6fe..f4384cc 100644
      except:
          return []
  
-@@ -206,7 +293,7 @@ def find_file(reg):
+@@ -206,7 +294,7 @@ def find_file(reg):
  def find_all_files(domain, exclude_list=[]):
      all_entrypoints = []
      executable_files = get_entrypoints(domain)
@@ -7154,7 +8586,46 @@ index 693c6fe..f4384cc 100644
          if exe.endswith("_exec_t") and exe not in exclude_list:
              for path in executable_files[exe]:
                  for f in find_file(path):
-@@ -296,13 +383,19 @@ def get_fcdict(fc_path=selinux.selinux_file_context_path()):
+@@ -230,12 +318,15 @@ def find_entrypoint_path(exe, exclude_list=[]):
+ 
+ 
+ def read_file_equiv(edict, fc_path, modify):
+-    fd = open(fc_path, "r")
+-    fc = fd.readlines()
+-    fd.close()
+-    for e in fc:
+-        f = e.split()
+-        edict[f[0]] = {"equiv": f[1], "modify": modify}
++    try:
++        with open(fc_path, "r") as fd:
++            fc = fd.readlines()
++            for e in fc:
++                f = e.split()
++                edict[f[0]] = {"equiv": f[1], "modify": modify}
++    except IOError as e:
++        if e.errno != errno.ENOENT:
++            raise
+     return edict
+ 
+ file_equiv_modified = None
+@@ -268,9 +359,13 @@ def get_local_file_paths(fc_path=selinux.selinux_file_context_path()):
+     if local_files:
+         return local_files
+     local_files = []
+-    fd = open(fc_path + ".local", "r")
+-    fc = fd.readlines()
+-    fd.close()
++    try:
++        with open(fc_path + ".local", "r") as fd:
++            fc = fd.readlines()
++    except IOError as e:
++        if e.errno != errno.ENOENT:
++            raise
++        return []
+     for i in fc:
+         rec = i.split()
+         if len(rec) == 0:
+@@ -296,13 +391,19 @@ def get_fcdict(fc_path=selinux.selinux_file_context_path()):
      fd = open(fc_path, "r")
      fc = fd.readlines()
      fd.close()
@@ -7162,25 +8633,25 @@ index 693c6fe..f4384cc 100644
 -    fc += fd.readlines()
 -    fd.close()
 +    try:
-+        fd = open(fc_path + ".homedirs", "r")
-+        fc += fd.readlines()
-+        fd.close()
++        with open(fc_path + ".homedirs", "r") as fd:
++            fc += fd.readlines()
 +    except IOError as e:
-+        pass
++        if e.errno != errno.ENOENT:
++            raise
      fcdict = {}
 -    fd = open(fc_path + ".local", "r")
 -    fc += fd.readlines()
 -    fd.close()
 +    try:
-+        fd = open(fc_path + ".local", "r")
-+        fc += fd.readlines()
-+        fd.close()
++        with open(fc_path + ".local", "r") as fd:
++            fc += fd.readlines()
 +    except IOError as e:
-+        pass
++        if e.errno != errno.ENOENT:
++            raise
  
      for i in fc:
          rec = i.split()
-@@ -334,7 +427,7 @@ def get_fcdict(fc_path=selinux.selinux_file_context_path()):
+@@ -334,7 +435,7 @@ def get_fcdict(fc_path=selinux.selinux_file_context_path()):
  
  def get_transitions_into(setype):
      try:
@@ -7189,7 +8660,7 @@ index 693c6fe..f4384cc 100644
      except TypeError:
          pass
      return None
-@@ -350,7 +443,7 @@ def get_transitions(setype):
+@@ -350,7 +451,7 @@ def get_transitions(setype):
  
  def get_file_transitions(setype):
      try:
@@ -7198,7 +8669,7 @@ index 693c6fe..f4384cc 100644
      except TypeError:
          pass
      return None
-@@ -377,7 +470,7 @@ def get_all_entrypoints():
+@@ -377,7 +478,7 @@ def get_all_entrypoints():
  def get_entrypoint_types(setype):
      entrypoints = []
      try:
@@ -7207,7 +8678,7 @@ index 693c6fe..f4384cc 100644
      except TypeError:
          pass
      return entrypoints
-@@ -386,7 +479,7 @@ def get_entrypoint_types(setype):
+@@ -386,7 +487,7 @@ def get_entrypoint_types(setype):
  def get_init_transtype(path):
      entrypoint = selinux.getfilecon(path)[1].split(":")[2]
      try:
@@ -7216,7 +8687,7 @@ index 693c6fe..f4384cc 100644
          if len(entrypoints) == 0:
              return None
          return entrypoints[0]["transtype"]
-@@ -397,7 +490,7 @@ def get_init_transtype(path):
+@@ -397,7 +498,7 @@ def get_init_transtype(path):
  
  def get_init_entrypoint(transtype):
      try:
@@ -7225,7 +8696,7 @@ index 693c6fe..f4384cc 100644
          if len(entrypoints) == 0:
              return None
          return entrypoints[0]["target"]
-@@ -408,7 +501,7 @@ def get_init_entrypoint(transtype):
+@@ -408,7 +509,7 @@ def get_init_entrypoint(transtype):
  
  def get_init_entrypoint_target(entrypoint):
      try:
@@ -7234,7 +8705,7 @@ index 693c6fe..f4384cc 100644
          return entrypoints[0]
      except TypeError:
          pass
-@@ -450,7 +543,7 @@ def get_methods():
+@@ -450,7 +551,7 @@ def get_methods():
      # List of per_role_template interfaces
          ifs = interfaces.InterfaceSet()
          ifs.from_file(fd)
@@ -7243,7 +8714,7 @@ index 693c6fe..f4384cc 100644
          fd.close()
      except:
          sys.stderr.write("could not open interface info [%s]\n" % fn)
-@@ -465,7 +558,7 @@ all_types = None
+@@ -465,7 +566,7 @@ all_types = None
  def get_all_types():
      global all_types
      if all_types == None:
@@ -7252,7 +8723,7 @@ index 693c6fe..f4384cc 100644
      return all_types
  
  user_types = None
-@@ -513,7 +606,6 @@ portrecsbynum = None
+@@ -513,7 +614,6 @@ portrecsbynum = None
  
  
  def gen_interfaces():
@@ -7260,7 +8731,7 @@ index 693c6fe..f4384cc 100644
      ifile = defaults.interface_info()
      headers = defaults.headers()
      rebuild = False
-@@ -525,7 +617,9 @@ def gen_interfaces():
+@@ -525,7 +625,9 @@ def gen_interfaces():
  
      if os.getuid() != 0:
          raise ValueError(_("You must regenerate interface info by running /usr/bin/sepolgen-ifgen"))
@@ -7271,7 +8742,7 @@ index 693c6fe..f4384cc 100644
  
  
  def gen_port_dict():
-@@ -562,6 +656,23 @@ def get_all_domains():
+@@ -562,6 +664,23 @@ def get_all_domains():
          all_domains = info(ATTRIBUTE, "domain")[0]["types"]
      return all_domains
  
@@ -7295,7 +8766,7 @@ index 693c6fe..f4384cc 100644
  roles = None
  
  
-@@ -569,7 +680,7 @@ def get_all_roles():
+@@ -569,7 +688,7 @@ def get_all_roles():
      global roles
      if roles:
          return roles
@@ -7304,7 +8775,7 @@ index 693c6fe..f4384cc 100644
      roles.remove("object_r")
      roles.sort()
      return roles
-@@ -607,7 +718,7 @@ def get_login_mappings():
+@@ -607,7 +726,7 @@ def get_login_mappings():
  
  
  def get_all_users():
@@ -7313,7 +8784,7 @@ index 693c6fe..f4384cc 100644
      users.sort()
      return users
  
-@@ -766,7 +877,7 @@ all_attributes = None
+@@ -766,7 +885,7 @@ all_attributes = None
  def get_all_attributes():
      global all_attributes
      if not all_attributes:
@@ -7322,7 +8793,7 @@ index 693c6fe..f4384cc 100644
      return all_attributes
  
  
-@@ -797,7 +908,7 @@ def policy(policy_file):
+@@ -797,7 +916,7 @@ def policy(policy_file):
  try:
      policy_file = get_installed_policy()
      policy(policy_file)
@@ -7331,7 +8802,7 @@ index 693c6fe..f4384cc 100644
      if selinux.is_selinux_enabled() == 1:
          raise e
  
-@@ -828,7 +939,7 @@ def get_bools(setype):
+@@ -828,7 +947,7 @@ def get_bools(setype):
      bools = []
      domainbools = []
      domainname, short_name = gen_short_name(setype)
@@ -7340,7 +8811,7 @@ index 693c6fe..f4384cc 100644
          for b in i:
              if not isinstance(b, tuple):
                  continue
-@@ -851,6 +962,8 @@ def get_all_booleans():
+@@ -851,6 +970,8 @@ def get_all_booleans():
      global booleans
      if not booleans:
          booleans = selinux.security_get_boolean_names()[1]
@@ -7349,7 +8820,7 @@ index 693c6fe..f4384cc 100644
      return booleans
  
  booleans_dict = None
-@@ -896,7 +1009,7 @@ def gen_bool_dict(path="/usr/share/selinux/devel/policy.xml"):
+@@ -896,7 +1017,7 @@ def gen_bool_dict(path="/usr/share/selinux/devel/policy.xml"):
              desc = i.find("desc").find("p").text.strip("\n")
              desc = re.sub("\n", " ", desc)
              booleans_dict[i.get('name')] = ("global", i.get('dftval'), desc)
@@ -7358,7 +8829,7 @@ index 693c6fe..f4384cc 100644
          pass
      return booleans_dict
  
-@@ -919,24 +1032,14 @@ def boolean_desc(boolean):
+@@ -919,24 +1040,14 @@ def boolean_desc(boolean):
  
  
  def get_os_version():
@@ -8303,15 +9774,16 @@ diff --git policycoreutils-2.5/sepolicy/sepolicy/interface.py policycoreutils-2.
 index 69078b0..6c351ee 100644
 --- policycoreutils-2.5/sepolicy/sepolicy/interface.py
 +++ policycoreutils-2.5/sepolicy/sepolicy/interface.py
-@@ -39,19 +39,23 @@ gettext.bindtextdomain(PROGNAME, "/usr/share/locale")
+@@ -38,20 +38,24 @@ import gettext
+ gettext.bindtextdomain(PROGNAME, "/usr/share/locale")
  gettext.textdomain(PROGNAME)
  try:
-     gettext.install(PROGNAME,
++    gettext.install(PROGNAME,
 +                    unicode=True,
 +                    codeset='utf-8')
 +except TypeError:
 +    # Failover to python3 install
-+    gettext.install(PROGNAME,
+     gettext.install(PROGNAME,
                      localedir="/usr/share/locale",
 -                    unicode=False,
                      codeset='utf-8')
@@ -9393,6 +10865,43 @@ index 2a7cfa3..1cc6a64 100644
  		if (S_ISLNK(sb.st_mode)) {
  			char path[PATH_MAX + 1];
  
+diff --git policycoreutils-2.5/setfiles/restorecon.8 policycoreutils-2.5/setfiles/restorecon.8
+index 900def5..54dd1db 100644
+--- policycoreutils-2.5/setfiles/restorecon.8
++++ policycoreutils-2.5/setfiles/restorecon.8
+@@ -27,6 +27,12 @@ context to the file object's extended attributes. If a file object has a
+ context, restorecon will only modify the type portion of the security context.
+ The \-F option will force a replacement of the entire context.
+ .P
++If a file is labeled with
++.BR customizable
++SELinux type (for list of customizable
++types see /etc/selinux/{SELINUXTYPE}/contexts/customizable_types), restorecon
++won't reset the label unless the \-F option is used.
++.P
+ It is the same executable as
+ .BR setfiles
+ but operates in a slightly different manner depending on its argv[0].
+@@ -64,7 +70,11 @@ change files and directories file labels recursively (descend directories).
+ .B Note: restorecon reports warnings on paths without default labels only if called non-recursively or in verbose mode.
+ .TP
+ .B \-v
+-show changes in file labels, if type or role are going to be changed.
++show changes in file labels, if type or role are going to be changed. Multiple -v options increase the verbosity. Note that the
++.B \-v
++and
++.B \-p
++options are mutually exclusive.
+ .TP
+ .B \-0
+ the separator for the input items is assumed to be the null character
+@@ -94,4 +104,5 @@ The program was written by Dan Walsh <dwalsh@redhat.com>.
+ .SH "SEE ALSO"
+ .BR setfiles (8),
+ .BR load_policy (8),
+-.BR checkpolicy (8)
++.BR checkpolicy (8),
++.BR customizable_types (5)
 diff --git policycoreutils-2.5/setfiles/setfiles.c policycoreutils-2.5/setfiles/setfiles.c
 index 9ac3ebd..e39b500 100644
 --- policycoreutils-2.5/setfiles/setfiles.c

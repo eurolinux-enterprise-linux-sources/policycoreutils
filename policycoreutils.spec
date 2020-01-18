@@ -1,13 +1,13 @@
 %global	libauditver	2.1.3-4
-%global libsepolver	2.5-6
-%global	libsemanagever	2.5-5
-%global	libselinuxver	2.5-6
+%global libsepolver	2.5-8
+%global	libsemanagever	2.5-9
+%global	libselinuxver	2.5-12
 %global	sepolgenver	1.2.3
 
 Summary: SELinux policy core utilities
 Name:	 policycoreutils
 Version: 2.5
-Release: 17.1%{?dist}
+Release: 22%{?dist}
 License: GPLv2
 Group:	 System Environment/Base
 # https://github.com/SELinuxProject/selinux/wiki/Releases
@@ -18,7 +18,7 @@ Source2: policycoreutils_man_ru2.tar.bz2
 Source3: system-config-selinux.png
 Source4: sepolicy-icons.tgz
 Source5: policycoreutils-po.tgz
-# HEAD e73b2759c68f261e3204c3523593b6ec25209b62
+# HEAD fa5785120708f5cf9272a9f96a43460031f14f50
 Patch0:	 policycoreutils-rhel.patch
 Patch1:  sepolgen-rhel.patch
 Patch10: policycoreutils-preserve-timestamps-for-.py-files.patch
@@ -142,7 +142,7 @@ Requires:audit-libs-python >=  %{libauditver}
 Obsoletes: policycoreutils < 2.0.61-2
 Requires: python-IPy
 Requires: checkpolicy
-Requires: setools-libs >= 3.3.8-1
+Requires: setools-libs >= 3.3.8-2
 
 %description python
 The policycoreutils-python package contains the management tools use to manage
@@ -381,6 +381,31 @@ The policycoreutils-restorecond package contains the restorecond service.
 %systemd_postun_with_restart restorecond.service
 
 %changelog
+* Mon Dec 11 2017 Petr Lautrbach <plautrba@redhat.com> - 2.5-22
+- semanage: Fix fcontext help message (#1499259)
+- semanage: Improve semanage-user.8 man page (#1079946)
+- semodule: Improve man page (#1337192)
+
+* Thu Dec 07 2017 Petr Lautrbach <plautrba@redhat.com> - 2.5-21
+- Update translations
+
+* Thu Nov 30 2017 Vit Mojzis <vmojzis@redhat.com> - 2.5-20
+- setfiles: Mention customizable types in restorecon man page (#1260238)
+- sepolicy: do not fail when file_contexts.local or .subs do not exist (#1512590)
+- semanage: Fix export of ibendport entries (#1471809)
+
+* Tue Nov 07 2017 Petr Lautrbach <plautrba@redhat.com> - 2.5-19
+- semanage: Call semanage_set_reload only if -N is used (#1421160)
+
+* Thu Oct 19 2017 Vit Mojzis <vmojzis@redhat.com> - 2.5-18
+- semanage: Enable listing file_contexts.homedirs
+- semanage: Fix manpage author for ibpkey and ibendport pages.
+- semanage: Update man pages for infiniband
+- semanage: Update semanage to allow runtime labeling of ibendports
+- semanage: Update semanage to allow runtime labeling of Infiniband Pkeys
+- semanage: Improve semanage-port man page
+- fixfiles: do not dereference link files in tmp
+
 * Fri May 26 2017 Petr Lautrbach <plautrba@redhat.com> - 2.5-17.1
 - Update translations
 
