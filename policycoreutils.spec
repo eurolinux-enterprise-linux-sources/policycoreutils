@@ -1,13 +1,14 @@
 %global	libauditver	2.1.3-4
-%global libsepolver	2.5-8
-%global	libsemanagever	2.5-9
-%global	libselinuxver	2.5-12
+%global libsepolver	2.5-10
+%global	libsemanagever	2.5-14
+%global	libselinuxver	2.5-14
 %global	sepolgenver	1.2.3
+%global setoolsver	3.3.8-4
 
 Summary: SELinux policy core utilities
 Name:	 policycoreutils
 Version: 2.5
-Release: 22%{?dist}
+Release: 29%{?dist}
 License: GPLv2
 Group:	 System Environment/Base
 # https://github.com/SELinuxProject/selinux/wiki/Releases
@@ -18,7 +19,7 @@ Source2: policycoreutils_man_ru2.tar.bz2
 Source3: system-config-selinux.png
 Source4: sepolicy-icons.tgz
 Source5: policycoreutils-po.tgz
-# HEAD fa5785120708f5cf9272a9f96a43460031f14f50
+# HEAD 3e2e1c0f8194137b2e511b6ab5ccc096894e76e5
 Patch0:	 policycoreutils-rhel.patch
 Patch1:  sepolgen-rhel.patch
 Patch10: policycoreutils-preserve-timestamps-for-.py-files.patch
@@ -30,10 +31,18 @@ Provides: /sbin/restorecon
 
 BuildRequires:	pam-devel libcgroup-devel libsepol-static >= %{libsepolver} libsemanage-static >= %{libsemanagever} libselinux-devel >= %{libselinuxver}  libcap-devel audit-libs-devel >=  %{libauditver} gettext
 BuildRequires: desktop-file-utils dbus-devel dbus-glib-devel
-BuildRequires: python python-devel setools-devel >= 3.3.8-1
+BuildRequires: python python-devel setools-devel >= %{setoolsver}
 BuildRequires: diffstat
-Requires: util-linux grep gawk diffutils rpm sed
-Requires: libsepol >= %{libsepolver} coreutils libselinux-utils >=  %{libselinuxver}
+Requires: util-linux
+Requires: grep
+Requires: gawk
+Requires: diffutils
+Requires: rpm
+Requires: sed
+Requires: libsepol >= %{libsepolver}
+Requires: libselinux-utils >=  %{libselinuxver}
+Requires: libsemanage >= %{libsemanagever}
+Requires: coreutils
 
 %description
 Security-enhanced Linux is a feature of the Linux® kernel and a number
@@ -142,7 +151,7 @@ Requires:audit-libs-python >=  %{libauditver}
 Obsoletes: policycoreutils < 2.0.61-2
 Requires: python-IPy
 Requires: checkpolicy
-Requires: setools-libs >= 3.3.8-2
+Requires: setools-libs >= %{setoolsver}
 
 %description python
 The policycoreutils-python package contains the management tools use to manage
@@ -381,6 +390,39 @@ The policycoreutils-restorecond package contains the restorecond service.
 %systemd_postun_with_restart restorecond.service
 
 %changelog
+* Tue Sep 18 2018 Vit Mojzis <vmojzis@redhat.com> - 2.5-29
+- gui: Make all polgen button labels translatable (#1569451)
+- Update translations (#1569451)
+
+* Wed Aug 29 2018 Vit Mojzis <vmojzis@redhat.com> - 2.5-28
+- Require setools containing SCTP patch (#1621004)
+
+* Fri Aug 24 2018 Vit Mojzis <vmojzis@redhat.com> - 2.5-27
+- semanage: fix Python syntax of catching several exceptions (#1598444)
+
+* Tue Aug 07 2018 Vit Mojzis <vmojzis@redhat.com> - 2.5-26
+- Add dependency on latest libsemanage package (#1612818)
+
+* Fri Jul 27 2018 Vit Mojzis <vmojzis@redhat.com> - 2.5-25
+- Update translations (#1569451)
+
+* Thu Jul 26 2018 Vit Mojzis <vmojzis@redhat.com> - 2.5-24
+- Stop rejecting SCTP and DCCP in sepolicy.info
+- semanage: Replace bare except with specific one (#1598444)
+- semanage: Fix logger class definition (#1598444)
+- semanage: Stop rejecting aliases in semanage commands (#1544793)
+- sepolicy: Stop rejecting aliases in sepolicy commands (#1600009)
+- semanage: Stop logging loginRecords changes (#1294663)
+- Use file_contexts.local in fixfiles restore (#1559808)
+
+* Fri May 11 2018 Vit Mojzis <vmojzis@redhat.com> - 2.5-23
+- Update translation files and remove empty ones (#1375915)
+- sepolicy: Fix sepolicy manpage (#1509383)
+- semanage/seobject: Fix moduleRecords.modify() (#1408331)
+- semodule: Improve man page and unify it with --help (#1320565)
+- setfiles: Improve description of -d switch (#1271327)
+- sepolgen: Try to translate SELinux contexts to raw (#1356149)
+
 * Mon Dec 11 2017 Petr Lautrbach <plautrba@redhat.com> - 2.5-22
 - semanage: Fix fcontext help message (#1499259)
 - semanage: Improve semanage-user.8 man page (#1079946)

@@ -1308,7 +1308,7 @@ index 3b83e45..3feb2ba 100644
 +        self.ready()
 +
 diff --git policycoreutils-2.5/gui/polgen.glade policycoreutils-2.5/gui/polgen.glade
-index 37c1472..9854fb2 100644
+index 37c1472..a712c57 100644
 --- policycoreutils-2.5/gui/polgen.glade
 +++ policycoreutils-2.5/gui/polgen.glade
 @@ -758,7 +758,7 @@
@@ -1338,6 +1338,15 @@ index 37c1472..9854fb2 100644
                              <child>
                                <widget class="GtkAlignment" id="alignment6">
                                  <property name="visible">True</property>
+@@ -2011,7 +2011,7 @@ Tab</property>
+                                       <widget class="GtkLabel" id="label17">
+                                         <property name="visible">True</property>
+                                         <property name="can_focus">False</property>
+-                                        <property name="label">Add File</property>
++                                        <property name="label" translatable="yes">Add File</property>
+                                         <property name="use_underline">True</property>
+                                       </widget>
+                                       <packing>
 @@ -2036,7 +2036,7 @@ Tab</property>
                              <property name="visible">True</property>
                              <property name="can_focus">True</property>
@@ -1347,6 +1356,15 @@ index 37c1472..9854fb2 100644
                              <child>
                                <widget class="GtkAlignment" id="alignment5">
                                  <property name="visible">True</property>
+@@ -2064,7 +2064,7 @@ Tab</property>
+                                       <widget class="GtkLabel" id="label16">
+                                         <property name="visible">True</property>
+                                         <property name="can_focus">False</property>
+-                                        <property name="label">Add Directory</property>
++                                        <property name="label" translatable="yes">Add Directory</property>
+                                         <property name="use_underline">True</property>
+                                       </widget>
+                                       <packing>
 @@ -2091,7 +2091,7 @@ Tab</property>
                              <property name="can_focus">True</property>
                              <property name="receives_default">False</property>
@@ -1365,6 +1383,15 @@ index 37c1472..9854fb2 100644
                              <child>
                                <widget class="GtkAlignment" id="alignment1">
                                  <property name="visible">True</property>
+@@ -2216,7 +2216,7 @@ Tab</property>
+                                       <widget class="GtkLabel" id="label3">
+                                         <property name="visible">True</property>
+                                         <property name="can_focus">False</property>
+-                                        <property name="label">Add Boolean</property>
++                                        <property name="label" translatable="yes">Add Boolean</property>
+                                         <property name="use_underline">True</property>
+                                       </widget>
+                                       <packing>
 @@ -2243,7 +2243,7 @@ Tab</property>
                              <property name="can_focus">True</property>
                              <property name="receives_default">False</property>
@@ -2644,7 +2671,7 @@ index 472785c..f33a0ea 100755
      print(_("Usage %s -l -d user ...") % sys.argv[0])
      print(_("Usage %s -L") % sys.argv[0])
 diff --git policycoreutils-2.5/scripts/fixfiles policycoreutils-2.5/scripts/fixfiles
-index 5c29eb9..b0c5757 100755
+index 5c29eb9..401be3f 100755
 --- policycoreutils-2.5/scripts/fixfiles
 +++ policycoreutils-2.5/scripts/fixfiles
 @@ -116,6 +116,7 @@ exclude_dirs() {
@@ -2655,17 +2682,18 @@ index 5c29eb9..b0c5757 100755
  FORCEFLAG=""
  DIRS=""
  RPMILES=""
-@@ -137,6 +138,9 @@ else
+@@ -137,6 +138,10 @@ else
      FC=/etc/security/selinux/file_contexts
  fi
  
 +FC_SUB_DIST=${FC}.subs_dist
 +FC_SUB=${FC}.subs
 +FC_HOMEDIRS=${FC}.homedirs
++FC_LOCAL=${FC}.local
  #
  # Log to either syslog or a LOGFILE
  #
-@@ -150,8 +154,9 @@ fi
+@@ -150,8 +155,9 @@ fi
  #
  newer() {
      DATE=$1
@@ -2676,7 +2704,7 @@ index 5c29eb9..b0c5757 100755
      done;
  
  }
-@@ -190,7 +195,7 @@ if [ -f ${PREFC} -a -x /usr/bin/diff ]; then
+@@ -190,7 +196,7 @@ if [ -f ${PREFC} -a -x /usr/bin/diff ]; then
  		  esac; \
  	       fi; \
  	    done | \
@@ -2685,7 +2713,7 @@ index 5c29eb9..b0c5757 100755
  	rm -f ${TEMPFILE} ${PREFCTEMPFILE}
  fi
  }
-@@ -222,7 +227,7 @@ if [ ! -z "$PREFC" ]; then
+@@ -222,7 +228,7 @@ if [ ! -z "$PREFC" ]; then
      exit $?
  fi
  if [ ! -z "$BOOTTIME" ]; then
@@ -2694,18 +2722,21 @@ index 5c29eb9..b0c5757 100755
      exit $?
  fi
  [ -x /usr/sbin/genhomedircon ] && /usr/sbin/genhomedircon
-@@ -243,6 +248,10 @@ then
+@@ -242,7 +248,12 @@ then
+ 		echo "${p1}" >> $TEMPFCFILE
  		logit "skipping the directory ${p}"
  	done
- FC=$TEMPFCFILE
-+/bin/cp -p ${FC_SUB_DIST} ${TEMPFCFILE}.subs_dist &>/dev/null || exit
-+/bin/cp -p ${FC_SUB} ${TEMPFCFILE}.subs &>/dev/null || exit
-+/bin/cp -p ${FC_HOMEDIRS} ${TEMPFCFILE}.homedirs &>/dev/null || exit
+-FC=$TEMPFCFILE
++	FC=$TEMPFCFILE
++	/bin/cp -p ${FC_SUB_DIST} ${TEMPFCFILE}.subs_dist &>/dev/null || exit
++	/bin/cp -p ${FC_SUB} ${TEMPFCFILE}.subs &>/dev/null || exit
++	/bin/cp -p ${FC_HOMEDIRS} ${TEMPFCFILE}.homedirs &>/dev/null || exit
++	/bin/cp -p ${FC_LOCAL} ${TEMPFCFILE}.local &>/dev/null || exit
 +
  fi
  if [ ! -z "$RPMFILES" ]; then
      for i in `echo "$RPMFILES" | sed 's/,/ /g'`; do
-@@ -251,7 +260,7 @@ if [ ! -z "$RPMFILES" ]; then
+@@ -251,7 +262,7 @@ if [ ! -z "$RPMFILES" ]; then
      exit $?
  fi
  if [ ! -z "$FILEPATH" ]; then
@@ -2714,12 +2745,12 @@ index 5c29eb9..b0c5757 100755
      return
  fi
  if [  -n "${FILESYSTEMSRW}" ]; then
-@@ -264,15 +273,15 @@ if [ ${OPTION} != "Relabel" ]; then
+@@ -264,15 +275,15 @@ if [ ${OPTION} != "Relabel" ]; then
      return
  fi
  echo "Cleaning up labels on /tmp"
 -rm -rf /tmp/gconfd-* /tmp/pulse-* /tmp/orbit-* $TEMPFCFILE
-+rm -rf /tmp/gconfd-* /tmp/pulse-* /tmp/orbit-* $TEMPFCFILE ${TEMPFCFILE}.subs_dist ${TEMPFCFILE}.subs ${TEMPFCFILE}.homedirs
++rm -rf /tmp/gconfd-* /tmp/pulse-* /tmp/orbit-* $TEMPFCFILE ${TEMPFCFILE}.subs_dist ${TEMPFCFILE}.subs ${TEMPFCFILE}.homedirs ${TEMPFCFILE}.local
  
  UNDEFINED=`get_undefined_type` || exit $?
  UNLABELED=`get_unlabeled_type` || exit $?
@@ -3574,7 +3605,7 @@ index 0fad36c..6032b41 100644
  .SH "AUTHOR"
  This man page was written by Daniel Walsh <dwalsh@redhat.com>
 diff --git policycoreutils-2.5/semanage/seobject.py policycoreutils-2.5/semanage/seobject.py
-index 3b0b108..91a1841 100644
+index 3b0b108..c49f0d6 100644
 --- policycoreutils-2.5/semanage/seobject.py
 +++ policycoreutils-2.5/semanage/seobject.py
 @@ -30,12 +30,13 @@ import os
@@ -3592,7 +3623,7 @@ index 3b0b108..91a1841 100644
  from IPy import IP
  
  import gettext
-@@ -79,9 +80,20 @@ file_type_str_to_option = {"all files": "a",
+@@ -79,17 +80,31 @@ file_type_str_to_option = {"all files": "a",
                             "directory": "d",
                             "character device": "c",
                             "block device": "b",
@@ -3613,8 +3644,11 @@ index 3b0b108..91a1841 100644
 +
  try:
      import audit
++    #test if audit module is enabled
++    audit.audit_close(audit.audit_open())
  
-@@ -90,6 +102,7 @@ try:
+     class logger:
+ 
          def __init__(self):
              self.audit_fd = audit.audit_open()
              self.log_list = []
@@ -3622,7 +3656,7 @@ index 3b0b108..91a1841 100644
  
          def log(self, msg, name="", sename="", serole="", serange="", oldsename="", oldserole="", oldserange=""):
  
-@@ -109,10 +122,17 @@ try:
+@@ -109,11 +124,18 @@ try:
          def log_remove(self, msg, name="", sename="", serole="", serange="", oldsename="", oldserole="", oldserange=""):
              self.log_list.append([self.audit_fd, audit.AUDIT_ROLE_REMOVE, sys.argv[0], str(msg), name, 0, sename, serole, serange, oldsename, oldserole, oldserange, "", "", ""])
  
@@ -3636,11 +3670,13 @@ index 3b0b108..91a1841 100644
 +                audit.audit_log_user_comm_message(*(l + [success]))
 +
              self.log_list = []
+-except:
 +            self.log_change_list = []
- except:
++except (OSError, ImportError):
      class logger:
  
-@@ -138,6 +158,9 @@ except:
+         def __init__(self):
+@@ -138,6 +160,9 @@ except:
          def log_remove(self, msg, name="", sename="", serole="", serange="", oldsename="", oldserole="", oldserange=""):
              self.log(msg, name, sename, serole, serange, oldsename, oldserole, oldserange)
  
@@ -3650,7 +3686,7 @@ index 3b0b108..91a1841 100644
          def commit(self, success):
              if success == 1:
                  message = "Successful: "
-@@ -155,6 +178,9 @@ class nulllogger:
+@@ -155,6 +180,9 @@ class nulllogger:
      def log_remove(self, msg, name="", sename="", serole="", serange="", oldsename="", oldserole="", oldserange=""):
          pass
  
@@ -3660,7 +3696,79 @@ index 3b0b108..91a1841 100644
      def commit(self, success):
          pass
  
-@@ -1109,6 +1135,8 @@ class portRecords(semanageRecords):
+@@ -384,8 +412,13 @@ class moduleRecords(semanageRecords):
+                     raise ValueError(_("Could not disable module %s") % m)
+         self.commit()
+ 
++    # Obsolete - "add()" does the same while allowing the user to set priority
+     def modify(self, file):
+-        rc = semanage_module_update_file(self.sh, file)
++        if not os.path.exists(file):
++            raise ValueError(_("Module does not exists %s ") % file)
++
++        # Priority was left unchanged, default is 400
++        rc = semanage_module_install_file(self.sh, file)
+         if rc >= 0:
+             self.commit()
+ 
+@@ -557,7 +590,6 @@ class loginRecords(semanageRecords):
+ 
+         semanage_seuser_key_free(k)
+         semanage_seuser_free(u)
+-        self.mylog.log("login", name, sename=sename, serange=serange, serole=",".join(serole), oldserole=",".join(oldserole), oldsename=self.oldsename, oldserange=self.oldserange)
+ 
+     def add(self, name, sename, serange):
+         try:
+@@ -565,7 +597,6 @@ class loginRecords(semanageRecords):
+             self.__add(name, sename, serange)
+             self.commit()
+         except ValueError, error:
+-            self.mylog.commit(0)
+             raise error
+ 
+     def __modify(self, name, sename="", serange=""):
+@@ -617,7 +648,6 @@ class loginRecords(semanageRecords):
+ 
+         semanage_seuser_key_free(k)
+         semanage_seuser_free(u)
+-        self.mylog.log("login", name, sename=self.sename, serange=self.serange, serole=",".join(serole), oldserole=",".join(oldserole), oldsename=self.oldsename, oldserange=self.oldserange)
+ 
+     def modify(self, name, sename="", serange=""):
+         try:
+@@ -625,7 +655,6 @@ class loginRecords(semanageRecords):
+             self.__modify(name, sename, serange)
+             self.commit()
+         except ValueError, error:
+-            self.mylog.commit(0)
+             raise error
+ 
+     def __delete(self, name):
+@@ -658,8 +687,6 @@ class loginRecords(semanageRecords):
+         rec, self.sename, self.serange = selinux.getseuserbyname("__default__")
+         range, (rc, serole) = userrec.get(self.sename)
+ 
+-        self.mylog.log_remove("login", name, sename=self.sename, serange=self.serange, serole=",".join(serole), oldserole=",".join(oldserole), oldsename=self.oldsename, oldserange=self.oldserange)
+-
+     def delete(self, name):
+         try:
+             self.begin()
+@@ -667,7 +694,6 @@ class loginRecords(semanageRecords):
+             self.commit()
+ 
+         except ValueError, error:
+-            self.mylog.commit(0)
+             raise error
+ 
+     def deleteall(self):
+@@ -681,7 +707,6 @@ class loginRecords(semanageRecords):
+                 self.__delete(semanage_seuser_get_name(u))
+             self.commit()
+         except ValueError, error:
+-            self.mylog.commit(0)
+             raise error
+ 
+     def get_all_logins(self):
+@@ -1109,6 +1134,8 @@ class portRecords(semanageRecords):
          semanage_port_key_free(k)
          semanage_port_free(p)
  
@@ -3669,7 +3777,7 @@ index 3b0b108..91a1841 100644
      def add(self, port, proto, serange, type):
          self.begin()
          self.__add(port, proto, serange, type)
-@@ -1138,8 +1166,11 @@ class portRecords(semanageRecords):
+@@ -1138,8 +1165,11 @@ class portRecords(semanageRecords):
  
          con = semanage_port_get_con(p)
  
@@ -3683,7 +3791,7 @@ index 3b0b108..91a1841 100644
          if setype != "":
              semanage_context_set_type(self.sh, con, setype)
  
-@@ -1150,6 +1181,8 @@ class portRecords(semanageRecords):
+@@ -1150,6 +1180,8 @@ class portRecords(semanageRecords):
          semanage_port_key_free(k)
          semanage_port_free(p)
  
@@ -3692,7 +3800,7 @@ index 3b0b108..91a1841 100644
      def modify(self, port, proto, serange, setype):
          self.begin()
          self.__modify(port, proto, serange, setype)
-@@ -1168,6 +1201,7 @@ class portRecords(semanageRecords):
+@@ -1168,6 +1200,7 @@ class portRecords(semanageRecords):
              low = semanage_port_get_low(port)
              high = semanage_port_get_high(port)
              port_str = "%s-%s" % (low, high)
@@ -3700,7 +3808,7 @@ index 3b0b108..91a1841 100644
              (k, proto_d, low, high) = self.__genkey(port_str, proto_str)
              if rc < 0:
                  raise ValueError(_("Could not create a key for %s") % port_str)
-@@ -1177,6 +1211,11 @@ class portRecords(semanageRecords):
+@@ -1177,6 +1210,11 @@ class portRecords(semanageRecords):
                  raise ValueError(_("Could not delete the port %s") % port_str)
              semanage_port_key_free(k)
  
@@ -3712,7 +3820,7 @@ index 3b0b108..91a1841 100644
          self.commit()
  
      def __delete(self, port, proto):
-@@ -1199,6 +1238,8 @@ class portRecords(semanageRecords):
+@@ -1199,6 +1237,8 @@ class portRecords(semanageRecords):
  
          semanage_port_key_free(k)
  
@@ -3721,7 +3829,7 @@ index 3b0b108..91a1841 100644
      def delete(self, port, proto):
          self.begin()
          self.__delete(port, proto)
-@@ -1276,6 +1317,499 @@ class portRecords(semanageRecords):
+@@ -1276,6 +1316,499 @@ class portRecords(semanageRecords):
                  rec += ", %s" % p
              print rec
  
@@ -4221,7 +4329,7 @@ index 3b0b108..91a1841 100644
  
  class nodeRecords(semanageRecords):
      try:
-@@ -1380,6 +1914,8 @@ class nodeRecords(semanageRecords):
+@@ -1380,6 +1913,8 @@ class nodeRecords(semanageRecords):
          semanage_node_key_free(k)
          semanage_node_free(node)
  
@@ -4230,7 +4338,7 @@ index 3b0b108..91a1841 100644
      def add(self, addr, mask, proto, serange, ctype):
          self.begin()
          self.__add(addr, mask, proto, serange, ctype)
-@@ -1421,6 +1957,8 @@ class nodeRecords(semanageRecords):
+@@ -1421,6 +1956,8 @@ class nodeRecords(semanageRecords):
          semanage_node_key_free(k)
          semanage_node_free(node)
  
@@ -4239,7 +4347,7 @@ index 3b0b108..91a1841 100644
      def modify(self, addr, mask, proto, serange, setype):
          self.begin()
          self.__modify(addr, mask, proto, serange, setype)
-@@ -1452,6 +1990,8 @@ class nodeRecords(semanageRecords):
+@@ -1452,6 +1989,8 @@ class nodeRecords(semanageRecords):
  
          semanage_node_key_free(k)
  
@@ -4248,7 +4356,7 @@ index 3b0b108..91a1841 100644
      def delete(self, addr, mask, proto):
          self.begin()
          self.__delete(addr, mask, proto)
-@@ -1581,6 +2121,8 @@ class interfaceRecords(semanageRecords):
+@@ -1581,6 +2120,8 @@ class interfaceRecords(semanageRecords):
          semanage_iface_key_free(k)
          semanage_iface_free(iface)
  
@@ -4257,7 +4365,7 @@ index 3b0b108..91a1841 100644
      def add(self, interface, serange, ctype):
          self.begin()
          self.__add(interface, serange, ctype)
-@@ -1618,6 +2160,8 @@ class interfaceRecords(semanageRecords):
+@@ -1618,6 +2159,8 @@ class interfaceRecords(semanageRecords):
          semanage_iface_key_free(k)
          semanage_iface_free(iface)
  
@@ -4266,7 +4374,7 @@ index 3b0b108..91a1841 100644
      def modify(self, interface, serange, setype):
          self.begin()
          self.__modify(interface, serange, setype)
-@@ -1646,6 +2190,8 @@ class interfaceRecords(semanageRecords):
+@@ -1646,6 +2189,8 @@ class interfaceRecords(semanageRecords):
  
          semanage_iface_key_free(k)
  
@@ -4275,7 +4383,7 @@ index 3b0b108..91a1841 100644
      def delete(self, interface):
          self.begin()
          self.__delete(interface)
-@@ -1775,6 +2321,8 @@ class fcontextRecords(semanageRecords):
+@@ -1775,6 +2320,8 @@ class fcontextRecords(semanageRecords):
                  if i.startswith(target + "/"):
                      raise ValueError(_("File spec %s conflicts with equivalency rule '%s %s'") % (target, i, fdict[i]))
  
@@ -4284,7 +4392,7 @@ index 3b0b108..91a1841 100644
          self.equiv[target] = substitute
          self.equal_ind = True
          self.commit()
-@@ -1785,6 +2333,9 @@ class fcontextRecords(semanageRecords):
+@@ -1785,6 +2332,9 @@ class fcontextRecords(semanageRecords):
              raise ValueError(_("Equivalence class for %s does not exists") % target)
          self.equiv[target] = substitute
          self.equal_ind = True
@@ -4294,7 +4402,7 @@ index 3b0b108..91a1841 100644
          self.commit()
  
      def createcon(self, target, seuser="system_u"):
-@@ -1879,6 +2430,11 @@ class fcontextRecords(semanageRecords):
+@@ -1879,6 +2429,11 @@ class fcontextRecords(semanageRecords):
          semanage_fcontext_key_free(k)
          semanage_fcontext_free(fcontext)
  
@@ -4306,7 +4414,7 @@ index 3b0b108..91a1841 100644
      def add(self, target, type, ftype="", serange="", seuser="system_u"):
          self.begin()
          self.__add(target, type, ftype, serange, seuser)
-@@ -1888,7 +2444,7 @@ class fcontextRecords(semanageRecords):
+@@ -1888,7 +2443,7 @@ class fcontextRecords(semanageRecords):
          if serange == "" and setype == "" and seuser == "":
              raise ValueError(_("Requires setype, serange or seuser"))
          if setype and setype not in self.valid_types:
@@ -4315,7 +4423,7 @@ index 3b0b108..91a1841 100644
  
          self.validate(target)
  
-@@ -1904,10 +2460,12 @@ class fcontextRecords(semanageRecords):
+@@ -1904,10 +2459,12 @@ class fcontextRecords(semanageRecords):
              if not exists:
                  raise ValueError(_("File context for %s is not defined") % target)
  
@@ -4332,7 +4440,7 @@ index 3b0b108..91a1841 100644
                  raise ValueError(_("Could not query file context for %s") % target)
  
          if setype != "<<none>>":
-@@ -1939,6 +2497,11 @@ class fcontextRecords(semanageRecords):
+@@ -1939,6 +2496,11 @@ class fcontextRecords(semanageRecords):
          semanage_fcontext_key_free(k)
          semanage_fcontext_free(fcontext)
  
@@ -4344,7 +4452,7 @@ index 3b0b108..91a1841 100644
      def modify(self, target, setype, ftype, serange, seuser):
          self.begin()
          self.__modify(target, setype, ftype, serange, seuser)
-@@ -1964,6 +2527,8 @@ class fcontextRecords(semanageRecords):
+@@ -1964,6 +2526,8 @@ class fcontextRecords(semanageRecords):
                  raise ValueError(_("Could not delete the file context %s") % target)
              semanage_fcontext_key_free(k)
  
@@ -4353,7 +4461,7 @@ index 3b0b108..91a1841 100644
          self.equiv = {}
          self.equal_ind = True
          self.commit()
-@@ -1972,6 +2537,9 @@ class fcontextRecords(semanageRecords):
+@@ -1972,6 +2536,9 @@ class fcontextRecords(semanageRecords):
          if target in self.equiv.keys():
              self.equiv.pop(target)
              self.equal_ind = True
@@ -4363,7 +4471,7 @@ index 3b0b108..91a1841 100644
              return
  
          (rc, k) = semanage_fcontext_key_create(self.sh, target, file_types[ftype])
-@@ -1996,6 +2564,8 @@ class fcontextRecords(semanageRecords):
+@@ -1996,6 +2563,8 @@ class fcontextRecords(semanageRecords):
  
          semanage_fcontext_key_free(k)
  
@@ -4372,7 +4480,7 @@ index 3b0b108..91a1841 100644
      def delete(self, target, ftype):
          self.begin()
          self.__delete(target, ftype)
-@@ -2009,10 +2579,15 @@ class fcontextRecords(semanageRecords):
+@@ -2009,10 +2578,15 @@ class fcontextRecords(semanageRecords):
              if rc < 0:
                  raise ValueError(_("Could not list file contexts"))
  
@@ -4390,10 +4498,10 @@ index 3b0b108..91a1841 100644
          ddict = {}
 diff --git policycoreutils-2.5/semanage/seobject/__init__.py policycoreutils-2.5/semanage/seobject/__init__.py
 new file mode 100644
-index 0000000..e268122
+index 0000000..bd05764
 --- /dev/null
 +++ policycoreutils-2.5/semanage/seobject/__init__.py
-@@ -0,0 +1,2839 @@
+@@ -0,0 +1,2836 @@
 +#! /usr/bin/python -Es
 +# Copyright (C) 2005-2013 Red Hat
 +# see file 'COPYING' for use and warranty information
@@ -4500,6 +4608,9 @@ index 0000000..e268122
 +
 +try:
 +        import audit
++        #test if audit module is enabled
++        audit.audit_close(audit.audit_open())
++
 +        class logger:
 +                def __init__(self):
 +                        self.audit_fd = audit.audit_open()
@@ -4534,7 +4645,7 @@ index 0000000..e268122
 +                                audit.audit_log_user_comm_message(*(l + [success]))
 +                        self.log_list = []
 +                        self.log_change_list = []
-+except:
++except OSError, ImportError:
 +        class logger:
 +                def __init__(self):
 +                        self.log_list = []
@@ -4811,10 +4922,13 @@ index 0000000..e268122
 +                                  raise ValueError(_("Could not disable module %s") % m)
 +               self.commit()
 +
++        # Obsolete - "add()" does the same while allowing the user to set priority
 +        def modify(self, file):
-+               if not file:
-+                   raise ValueError(_("You did not define a file name."))
-+               rc = semanage_module_upgrade_file(self.sh, file)
++               if not os.path.exists(file):
++                   raise ValueError(_("Module does not exists %s ") % file)
++
++               # Priority was left unchanged, default is 400
++               rc = semanage_module_install_file(self.sh, file)
 +               if rc >= 0:
 +                      self.commit()
 +
@@ -4991,7 +5105,6 @@ index 0000000..e268122
 +
 +                semanage_seuser_key_free(k)
 +                semanage_seuser_free(u)
-+                self.mylog.log("login", name, sename=sename, serange=serange, serole=",".join(serole), oldserole=",".join(oldserole), oldsename=self.oldsename, oldserange=self.oldserange)
 +
 +        def add(self, name, sename, serange):
 +                try:
@@ -4999,7 +5112,6 @@ index 0000000..e268122
 +                        self.__add(name, sename, serange)
 +                        self.commit()
 +                except ValueError as error:
-+                        self.mylog.commit(0)
 +                        raise error
 +
 +        def __modify(self, name, sename="", serange=None):
@@ -5051,7 +5163,6 @@ index 0000000..e268122
 +
 +                semanage_seuser_key_free(k)
 +                semanage_seuser_free(u)
-+                self.mylog.log("login", name, sename=self.sename, serange=self.serange, serole=",".join(serole), oldserole=",".join(oldserole), oldsename=self.oldsename, oldserange=self.oldserange)
 +
 +        def modify(self, name, sename="", serange=None):
 +                try:
@@ -5059,7 +5170,6 @@ index 0000000..e268122
 +                        self.__modify(name, sename, serange)
 +                        self.commit()
 +                except ValueError as error:
-+                        self.mylog.commit(0)
 +                        raise error
 +
 +        def __delete(self, name):
@@ -5092,8 +5202,6 @@ index 0000000..e268122
 +                rec, self.sename, self.serange = selinux.getseuserbyname("__default__")
 +                RANGE, (rc, serole) = userrec.get(self.sename)
 +
-+                self.mylog.log_remove("login", name, sename=self.sename, serange=self.serange, serole=",".join(serole), oldserole=",".join(oldserole), oldsename=self.oldsename, oldserange=self.oldserange)
-+
 +        def delete(self, name):
 +                try:
 +                        self.begin()
@@ -5101,7 +5209,6 @@ index 0000000..e268122
 +                        self.commit()
 +
 +                except ValueError as error:
-+                        self.mylog.commit(0)
 +                        raise error
 +
 +        def deleteall(self):
@@ -5115,7 +5222,6 @@ index 0000000..e268122
 +                                self.__delete(semanage_seuser_get_name(u))
 +                        self.commit()
 +                except ValueError as error:
-+                        self.mylog.commit(0)
 +                        raise error
 +
 +        def get_all_logins(self):
@@ -5494,7 +5600,7 @@ index 0000000..e268122
 +                if type == "":
 +                        raise ValueError(_("Type is required"))
 +
-+                if type not in self.valid_types:
++                if sepolicy.get_real_type_name(type) not in self.valid_types:
 +                        raise ValueError(_("Type %s is invalid, must be a port type") % type)
 +
 +                (k, proto_d, low, high) = self.__genkey(port, proto)
@@ -5560,7 +5666,7 @@ index 0000000..e268122
 +                        else:
 +                                raise ValueError(_("Requires setype"))
 +
-+                if setype and setype not in self.valid_types:
++                if setype and sepolicy.get_real_type_name(setype) not in self.valid_types:
 +                        raise ValueError(_("Type %s is invalid, must be a file or device type") % setype)
 +
 +                (k, proto_d, low, high) = self.__genkey(port, proto)
@@ -5764,7 +5870,7 @@ index 0000000..e268122
 +                if type == "":
 +                        raise ValueError(_("Type is required"))
 +
-+                if type not in self.valid_types:
++                if sepolicy.get_real_type_name(type) not in self.valid_types:
 +                        raise ValueError(_("Type %s is invalid, must be a ibpkey type") % type)
 +
 +                (k, subnet_prefix, low, high) = self.__genkey(pkey, subnet_prefix)
@@ -5826,7 +5932,7 @@ index 0000000..e268122
 +                        else:
 +                                raise ValueError(_("Requires setype"))
 +
-+                if setype and setype not in self.valid_types:
++                if setype and sepolicy.get_real_type_name(setype) not in self.valid_types:
 +                        raise ValueError(_("Type %s is invalid, must be a ibpkey type") % setype)
 +
 +                (k, subnet_prefix, low, high) = self.__genkey(pkey, subnet_prefix)
@@ -6013,7 +6119,7 @@ index 0000000..e268122
 +                if type == "":
 +                        raise ValueError(_("Type is required"))
 +
-+                if type not in self.valid_types:
++                if sepolicy.get_real_type_name(type) not in self.valid_types:
 +                        raise ValueError(_("Type %s is invalid, must be an ibendport type") % type)
 +                (k, ibendport, port) = self.__genkey(ibendport, ibdev_name)
 +
@@ -6074,7 +6180,7 @@ index 0000000..e268122
 +                        else:
 +                                raise ValueError(_("Requires setype"))
 +
-+                if setype and setype not in self.valid_types:
++                if setype and sepolicy.get_real_type_name(setype) not in self.valid_types:
 +                        raise ValueError(_("Type %s is invalid, must be an ibendport type") % setype)
 +
 +                (k, ibdev_name, port) = self.__genkey(ibendport, ibdev_name)
@@ -6265,7 +6371,7 @@ index 0000000..e268122
 +               if ctype == "":
 +                       raise ValueError(_("SELinux node type is required"))
 +
-+               if ctype not in self.valid_types:
++               if sepolicy.get_real_type_name(ctype) not in self.valid_types:
 +                       raise ValueError(_("Type %s is invalid, must be a node type") % ctype)
 +
 +               (rc, k) = semanage_node_key_create(self.sh, addr, mask, proto)
@@ -6335,7 +6441,7 @@ index 0000000..e268122
 +               if not serange and setype == "":
 +                       raise ValueError(_("Requires setype or serange"))
 +
-+               if setype and setype not in self.valid_types:
++               if setype and sepolicy.get_real_type_name(setype) not in self.valid_types:
 +                       raise ValueError(_("Type %s is invalid, must be a node type") % setype)
 +
 +               (rc, k) = semanage_node_key_create(self.sh, addr, mask, proto)
@@ -6659,7 +6765,6 @@ index 0000000..e268122
 +        try:
 +                valid_types =  sepolicy.info(sepolicy.ATTRIBUTE, "file_type")[0]["types"]
 +                valid_types +=  sepolicy.info(sepolicy.ATTRIBUTE, "device_node")[0]["types"]
-+                valid_types.append("<<none>>")
 +        except RuntimeError:
 +                valid_types = []
 +
@@ -6792,7 +6897,7 @@ index 0000000..e268122
 +                if type == "":
 +                        raise ValueError(_("SELinux Type is required"))
 +
-+                if type not in self.valid_types:
++                if type != "<<none>>" and sepolicy.get_real_type_name(type) not in self.valid_types:
 +                        raise ValueError(_("Type %s is invalid, must be a file or device type") % type)
 +
 +                (rc, k) = semanage_fcontext_key_create(self.sh, target, file_types[ftype])
@@ -6856,7 +6961,7 @@ index 0000000..e268122
 +        def __modify(self, target, setype, ftype, serange, seuser):
 +                if serange and setype == "" and seuser == "":
 +                        raise ValueError(_("Requires setype, serange or seuser"))
-+                if setype and setype not in self.valid_types:
++                if setype not in ["",  "<<none>>"] and sepolicy.get_real_type_name(setype) not in self.valid_types:
 +                        raise ValueError(_("Type %s is invalid, must be a file or device type") % setype)
 +
 +                self.validate(target)
@@ -7275,10 +7380,28 @@ index 0000000..7735c59
 +      packages=["seobject"],
 +)
 diff --git policycoreutils-2.5/semodule/semodule.8 policycoreutils-2.5/semodule/semodule.8
-index 6db390c..7dd95ef 100644
+index 6db390c..34d34eb 100644
 --- policycoreutils-2.5/semodule/semodule.8
 +++ policycoreutils-2.5/semodule/semodule.8
-@@ -36,9 +36,9 @@ deprecated, alias for --install
+@@ -3,7 +3,7 @@
+ semodule \- Manage SELinux policy modules.
+ 
+ .SH SYNOPSIS
+-.B semodule [options]... MODE [MODES]...
++.B semodule [option]... MODE...
+ .br
+ .SH DESCRIPTION
+ .PP
+@@ -15,7 +15,7 @@ any other transaction.  semodule acts on module packages created
+ by semodule_package.  Conventionally, these files have a .pp suffix
+ (policy package), although this is not mandated in any way.
+ 
+-.SH "OPTIONS"
++.SH "MODES"
+ .TP
+ .B \-R, \-\-reload
+ force a reload of policy
+@@ -36,16 +36,11 @@ deprecated, alias for --install
  deprecated, alias for --install
  .TP
  .B  \-r,\-\-remove=MODULE_NAME
@@ -7289,8 +7412,35 @@ index 6db390c..7dd95ef 100644
 +.B  \-l[KIND],\-\-list-modules[=KIND]
  display list of installed modules (other than base)
  .TP
- .B  \-E,\-\-extract=MODULE_PKG
-@@ -88,10 +88,12 @@ Use an alternate path for the policy store root
+-.B  \-E,\-\-extract=MODULE_PKG
+-Extract a module from the store as an HLL or CIL file to the current directory.
+-A module is extracted as HLL by default. The name of the module written is
+-<module-name>.<lang_ext>
+-.TP
+ .B  KIND:
+ .TP
+ standard
+@@ -57,12 +52,18 @@ list all modules
+ .B  \-X,\-\-priority=PRIORITY
+ set priority for following operations (1-999)
+ .TP
+-.B  \-e,\-\-enabled=MODULE_NAME
++.B  \-e,\-\-enable=MODULE_NAME
+ enable module
+ .TP
+ .B  \-d,\-\-disable=MODULE_NAME
+ disable module
+ .TP
++.B  \-E,\-\-extract=MODULE_PKG
++Extract a module from the store as an HLL or CIL file to the current directory.
++A module is extracted as HLL by default. The name of the module written is
++<module-name>.<lang_ext>
++.SH "OPTIONS"
++.TP
+ .B  \-s,\-\-store
+ name of the store to operate on
+ .TP
+@@ -88,10 +89,12 @@ Use an alternate path for the policy store root
  be verbose
  .TP
  .B  \-c,\-\-cil
@@ -7305,8 +7455,15 @@ index 6db390c..7dd95ef 100644
  
  .SH EXAMPLE
  .nf
-@@ -101,6 +103,10 @@ $ semodule \-b base.pp
+@@ -99,29 +102,34 @@ Extract module as an HLL file. This only affects the \-\-extract option.
+ $ semodule \-b base.pp
+ # Install or replace a non-base policy package.
  $ semodule \-i httpd.pp
++# Install or replace all non-base modules in the current directory.
++# This syntax can be used with -i/u/r/E, but no other option can be entered after the module names
++$ semodule \-i *.pp
++# Install or replace all modules in the current directory.
++$ ls *.pp | grep \-Ev "base.pp|enableaudit.pp" | xargs /usr/sbin/semodule \-b base.pp \-i
  # List non-base modules.
  $ semodule \-l
 +# List all modules including priorities
@@ -7316,10 +7473,11 @@ index 6db390c..7dd95ef 100644
  # Turn on all AVC Messages for which SELinux currently is "dontaudit"ing.
  $ semodule \-DB
  # Turn "dontaudit" rules back on.
-@@ -109,19 +115,19 @@ $ semodule \-B
- $ semodule \-i *.pp
- # Install or replace all modules in the current directory.
- $ ls *.pp | grep \-Ev "base.pp|enableaudit.pp" | xargs /usr/sbin/semodule \-b base.pp \-i
+ $ semodule \-B
+-# Install or replace all non-base modules in the current directory.
+-$ semodule \-i *.pp
+-# Install or replace all modules in the current directory.
+-$ ls *.pp | grep \-Ev "base.pp|enableaudit.pp" | xargs /usr/sbin/semodule \-b base.pp \-i
 -# Disable a module.
 +# Disable a module (all instances of given module across priorities will be disabled).
  $ semodule \-d alsa
@@ -7340,12 +7498,20 @@ index 6db390c..7dd95ef 100644
  
  .SH SEE ALSO
 diff --git policycoreutils-2.5/semodule/semodule.c policycoreutils-2.5/semodule/semodule.c
-index bcfaa2b..311d6de 100644
+index bcfaa2b..d053493 100644
 --- policycoreutils-2.5/semodule/semodule.c
 +++ policycoreutils-2.5/semodule/semodule.c
-@@ -126,8 +126,8 @@ static void usage(char *progname)
+@@ -120,26 +120,26 @@ static void create_signal_handlers(void)
+ 
+ static void usage(char *progname)
+ {
+-	printf("usage:  %s [options]... MODE [MODES]...\n", progname);
++	printf("usage:  %s [option]... MODE...\n", progname);
+ 	printf("Manage SELinux policy modules.\n");
+ 	printf("MODES:\n");
  	printf("  -R, --reload		    reload policy\n");
  	printf("  -B, --build		    build and reload policy\n");
++	printf("  -D,--disable_dontaudit    Remove dontaudits from policy\n");
  	printf("  -i,--install=MODULE_PKG   install a new module\n");
 -	printf("  -r,--remove=MODULE_NAME   remove existing module\n");
 -	printf("  -l,--list-modules=[KIND]  display list of installed modules\n");
@@ -7354,6 +7520,19 @@ index bcfaa2b..311d6de 100644
  	printf("     KIND:  standard  list highest priority, enabled modules\n");
  	printf("            full      list all modules\n");
  	printf("  -X,--priority=PRIORITY    set priority for following operations (1-999)\n");
+ 	printf("  -e,--enable=MODULE_NAME   enable module\n");
+ 	printf("  -d,--disable=MODULE_NAME  disable module\n");
+ 	printf("  -E,--extract=MODULE_NAME  extract module\n");
+-	printf("Other options:\n");
++	printf("Options:\n");
+ 	printf("  -s,--store	   name of the store to operate on\n");
+ 	printf("  -N,-n,--noreload do not reload policy after commit\n");
+ 	printf("  -h,--help        print this message and quit\n");
+ 	printf("  -v,--verbose     be verbose\n");
+-	printf("  -D,--disable_dontaudit	Remove dontaudits from policy\n");
+ 	printf("  -P,--preserve_tunables	Preserve tunables in policy\n");
+ 	printf("  -C,--ignore-module-cache	Rebuild CIL modules compiled from HLL files\n");
+ 	printf("  -p,--path        use an alternate path for the policy root\n");
 @@ -209,7 +209,7 @@ static void parse_command_line(int argc, char **argv)
  	no_reload = 0;
  	priority = 400;
@@ -7441,7 +7620,7 @@ index dc3ce6a..3b93845 100644
 -
 -
 diff --git policycoreutils-2.5/sepolicy/info.c policycoreutils-2.5/sepolicy/info.c
-index bbb6844..33d6e5a 100644
+index bbb6844..ceb5c9b 100644
 --- policycoreutils-2.5/sepolicy/info.c
 +++ policycoreutils-2.5/sepolicy/info.c
 @@ -1,12 +1,14 @@
@@ -7462,7 +7641,21 @@ index bbb6844..33d6e5a 100644
   *
   *  Copyright (C) 2003-2008 Tresys Technology, LLC
   *
-@@ -94,7 +96,6 @@ static PyObject* get_sens(const char *name, const apol_policy_t * policydb)
+@@ -52,6 +54,13 @@
+ 
+ #define COPYRIGHT_INFO "Copyright (C) 2003-2007 Tresys Technology, LLC"
+ 
++#ifndef IPPROTO_DCCP
++#define IPPROTO_DCCP 33
++#endif
++#ifndef IPPROTO_SCTP
++#define IPPROTO_SCTP 132
++#endif
++
+ enum input
+ {
+ 	TYPE, ATTRIBUTE, ROLE, USER, PORT, BOOLEAN, CLASS, SENS, CATS
+@@ -94,7 +103,6 @@ static PyObject* get_sens(const char *name, const apol_policy_t * policydb)
  {
  	PyObject *dict = NULL;
  	int error = 0;
@@ -7470,7 +7663,7 @@ index bbb6844..33d6e5a 100644
  	size_t i;
  	char *tmp = NULL;
  	const char *lvl_name = NULL;
-@@ -126,7 +127,6 @@ static PyObject* get_sens(const char *name, const apol_policy_t * policydb)
+@@ -126,7 +134,6 @@ static PyObject* get_sens(const char *name, const apol_policy_t * policydb)
  		if (py_insert_string(dict, lvl_name, tmp))
  			goto err;
  		free(tmp); tmp = NULL;
@@ -7478,7 +7671,7 @@ index bbb6844..33d6e5a 100644
  	}
  
  	if (name && !apol_vector_get_size(v)) {
-@@ -408,7 +408,7 @@ cleanup:
+@@ -408,7 +415,7 @@ cleanup:
  }
  
  /**
@@ -7487,7 +7680,7 @@ index bbb6844..33d6e5a 100644
   * all of that attribute's types.
   *
   * @param type_datum Reference to sepol type_datum
-@@ -424,7 +424,7 @@ static PyObject* get_attr(const qpol_type_t * type_datum, const apol_policy_t *
+@@ -424,7 +431,7 @@ static PyObject* get_attr(const qpol_type_t * type_datum, const apol_policy_t *
  	unsigned char isattr;
  	int error = 0;
  	int rt = 0;
@@ -7496,7 +7689,7 @@ index bbb6844..33d6e5a 100644
  	if (!dict) goto err;
  
  	if (qpol_type_get_name(q, type_datum, &attr_name))
-@@ -442,7 +442,7 @@ static PyObject* get_attr(const qpol_type_t * type_datum, const apol_policy_t *
+@@ -442,7 +449,7 @@ static PyObject* get_attr(const qpol_type_t * type_datum, const apol_policy_t *
  			goto err;
  		list = PyList_New(0);
  		if (!list) goto err;
@@ -7505,7 +7698,7 @@ index bbb6844..33d6e5a 100644
  		for (; !qpol_iterator_end(iter); qpol_iterator_next(iter)) {
  			if (qpol_iterator_get_item(iter, (void **)&attr_datum))
  				goto err;
-@@ -601,7 +601,7 @@ static PyObject* get_type(const qpol_type_t * type_datum, const apol_policy_t *
+@@ -601,7 +608,7 @@ static PyObject* get_type(const qpol_type_t * type_datum, const apol_policy_t *
  	int error = 0;
  	int rt;
  	unsigned char isalias, ispermissive, isattr;
@@ -7514,7 +7707,7 @@ index bbb6844..33d6e5a 100644
  	if (!dict) goto err;
  
  	if (qpol_type_get_name(q, type_datum, &type_name))
-@@ -638,7 +638,7 @@ err:
+@@ -638,7 +645,7 @@ err:
  	py_decref(dict); dict = NULL;
  
  cleanup:
@@ -7523,7 +7716,7 @@ index bbb6844..33d6e5a 100644
  	return dict;
  }
  
-@@ -674,7 +674,7 @@ static PyObject* get_booleans(const char *name, const apol_policy_t * policydb)
+@@ -674,7 +681,7 @@ static PyObject* get_booleans(const char *name, const apol_policy_t * policydb)
  		if (qpol_bool_get_state(q, bool_datum, &state))
  			goto err;
  
@@ -7532,7 +7725,7 @@ index bbb6844..33d6e5a 100644
  		if (!dict) goto err;
  		if (py_insert_string(dict, "name", name))
  			goto err;
-@@ -696,7 +696,7 @@ static PyObject* get_booleans(const char *name, const apol_policy_t * policydb)
+@@ -696,7 +703,7 @@ static PyObject* get_booleans(const char *name, const apol_policy_t * policydb)
  			if (qpol_bool_get_state(q, bool_datum, &state))
  				goto err;
  
@@ -7541,7 +7734,7 @@ index bbb6844..33d6e5a 100644
  			if (!dict) goto err;
  			if (py_insert_string(dict, "name", bool_name))
  				goto err;
-@@ -718,7 +718,7 @@ err:
+@@ -718,7 +725,7 @@ err:
  
  cleanup:
  	qpol_iterator_destroy(&iter);
@@ -7550,7 +7743,7 @@ index bbb6844..33d6e5a 100644
  	return list;
  }
  
-@@ -750,7 +750,7 @@ static PyObject* get_user(const qpol_user_t * user_datum, const apol_policy_t *
+@@ -750,7 +757,7 @@ static PyObject* get_user(const qpol_user_t * user_datum, const apol_policy_t *
  	if (qpol_user_get_name(q, user_datum, &user_name))
  		goto err;
  
@@ -7559,7 +7752,7 @@ index bbb6844..33d6e5a 100644
  	if (!dict) goto err;
  
  	if (py_insert_string(dict, "name", user_name))
-@@ -775,7 +775,7 @@ static PyObject* get_user(const qpol_user_t * user_datum, const apol_policy_t *
+@@ -775,7 +782,7 @@ static PyObject* get_user(const qpol_user_t * user_datum, const apol_policy_t *
  		    goto err;
  		free(tmp); tmp=NULL;
  	}
@@ -7568,7 +7761,7 @@ index bbb6844..33d6e5a 100644
  	if (qpol_user_get_role_iter(q, user_datum, &iter))
  		goto err;
  	for (; !qpol_iterator_end(iter); qpol_iterator_next(iter)) {
-@@ -1000,7 +1000,7 @@ cleanup:
+@@ -1000,7 +1007,7 @@ cleanup:
  }
  
  /**
@@ -7577,7 +7770,7 @@ index bbb6844..33d6e5a 100644
   * all of that role's types.
   *
   * @param type_datum Reference to sepol type_datum
-@@ -1046,7 +1046,7 @@ static PyObject* get_role(const qpol_role_t * role_datum, const apol_policy_t *
+@@ -1046,7 +1053,7 @@ static PyObject* get_role(const qpol_role_t * role_datum, const apol_policy_t *
  		if (rt) goto err;
  	}
  	qpol_iterator_destroy(&iter);
@@ -7586,16 +7779,18 @@ index bbb6844..33d6e5a 100644
  	if (qpol_role_get_type_iter(q, role_datum, &iter))
  		goto err;
  	if (qpol_iterator_get_size(iter, &n_types))
-@@ -1129,7 +1129,7 @@ static PyObject*  get_ports(const char *num, const apol_policy_t * policydb)
+@@ -1129,7 +1136,9 @@ static PyObject*  get_ports(const char *num, const apol_policy_t * policydb)
  		}
  
  		if ((ocon_proto != IPPROTO_TCP) &&
 -		    (ocon_proto != IPPROTO_UDP)) 
-+		    (ocon_proto != IPPROTO_UDP))
++		    (ocon_proto != IPPROTO_UDP) &&
++		    (ocon_proto != IPPROTO_DCCP) &&
++		    (ocon_proto != IPPROTO_SCTP))
  			goto err;
  
  		if (qpol_portcon_get_context(q, portcon, &ctxt)) {
-@@ -1145,13 +1145,13 @@ static PyObject*  get_ports(const char *num, const apol_policy_t * policydb)
+@@ -1145,13 +1154,13 @@ static PyObject*  get_ports(const char *num, const apol_policy_t * policydb)
  		if ((c = apol_context_create_from_qpol_context(policydb, ctxt)) == NULL) {
  			goto err;
  		}
@@ -7612,7 +7807,7 @@ index bbb6844..33d6e5a 100644
  		if (!dict) goto err;
  		if (py_insert_string(dict, "type", type))
  			goto err;
-@@ -1224,7 +1224,7 @@ static PyObject*  get_roles(const char *name, const apol_policy_t * policydb)
+@@ -1224,7 +1233,7 @@ static PyObject*  get_roles(const char *name, const apol_policy_t * policydb)
  		}
  		obj = get_role(role_datum, policydb);
  		rt = py_append_obj(list, obj);
@@ -7621,7 +7816,7 @@ index bbb6844..33d6e5a 100644
  		if (rt) goto err;
  	} else {
  		if (qpol_policy_get_role_iter(q, &iter))
-@@ -1235,7 +1235,7 @@ static PyObject*  get_roles(const char *name, const apol_policy_t * policydb)
+@@ -1235,7 +1244,7 @@ static PyObject*  get_roles(const char *name, const apol_policy_t * policydb)
  				goto err;
  			obj = get_role(role_datum, policydb);
  			rt = py_append_obj(list, obj);
@@ -7630,7 +7825,7 @@ index bbb6844..33d6e5a 100644
  			if (rt) goto err;
  		}
  		qpol_iterator_destroy(&iter);
-@@ -1283,7 +1283,7 @@ static PyObject* get_types(const char *name, const apol_policy_t * policydb)
+@@ -1283,7 +1292,7 @@ static PyObject* get_types(const char *name, const apol_policy_t * policydb)
  		}
  		obj = get_type(type_datum, policydb);
  		rt = py_append_obj(list, obj);
@@ -7639,7 +7834,7 @@ index bbb6844..33d6e5a 100644
  		if (rt) goto err;
  	} else {
  		if (qpol_policy_get_type_iter(q, &iter))
-@@ -1294,7 +1294,7 @@ static PyObject* get_types(const char *name, const apol_policy_t * policydb)
+@@ -1294,7 +1303,7 @@ static PyObject* get_types(const char *name, const apol_policy_t * policydb)
  				goto err;
  			obj = get_type(type_datum, policydb);
  			rt = py_append_obj(list, obj);
@@ -7648,7 +7843,7 @@ index bbb6844..33d6e5a 100644
  			if (rt) goto err;
  		}
  	}
-@@ -1363,7 +1363,7 @@ PyObject *wrap_info(PyObject *UNUSED(self), PyObject *args){
+@@ -1363,7 +1372,7 @@ PyObject *wrap_info(PyObject *UNUSED(self), PyObject *args){
      }
  
      if (!PyArg_ParseTuple(args, "iz", &type, &name))
@@ -8093,8 +8288,31 @@ index 2e67456..0c5f998 100644
  .br
  .B sepolicy generate \-\-cgi [\-n NAME] command [\-w WRITE_PATH ]
  .br
+diff --git policycoreutils-2.5/sepolicy/sepolicy.8 policycoreutils-2.5/sepolicy/sepolicy.8
+index 7900586..09d2b24 100644
+--- policycoreutils-2.5/sepolicy/sepolicy.8
++++ policycoreutils-2.5/sepolicy/sepolicy.8
+@@ -22,14 +22,15 @@ Query SELinux policy to see if domains can communicate with each other
+ .br
+ 
+ .B    generate
+-.br 
+ .br
+ Generate SELinux Policy module template
+-.B    gui
++.B sepolicy-generate(8)
+ .br
++
++.B    gui
+ .br
+ Launch Graphical User Interface for SELinux Policy, requires policycoreutils-gui package.
+-.B sepolicy-generate(8)
++.B sepolicy-gui(8)
+ .br
+ 
+ .B    interface
 diff --git policycoreutils-2.5/sepolicy/sepolicy.py policycoreutils-2.5/sepolicy/sepolicy.py
-index 7d57f6e..6ae1da6 100755
+index 7d57f6e..4a162c3 100755
 --- policycoreutils-2.5/sepolicy/sepolicy.py
 +++ policycoreutils-2.5/sepolicy/sepolicy.py
 @@ -26,6 +26,7 @@ import sys
@@ -8126,7 +8344,34 @@ index 7d57f6e..6ae1da6 100755
  
  usage = "sepolicy generate [-h] [-n NAME] [-p PATH] ["
  usage_dict = {' --newtype': ('-t [TYPES [TYPES ...]]',), ' --customize': ('-d DOMAIN', '-a  ADMIN_DOMAIN', "[ -w WRITEPATHS ]",), ' --admin_user': ('[-r TRANSITION_ROLE ]', "[ -w WRITEPATHS ]",), ' --application': ('COMMAND', "[ -w WRITEPATHS ]",), ' --cgi': ('COMMAND', "[ -w WRITEPATHS ]",), ' --confined_admin': ('-a  ADMIN_DOMAIN', "[ -w WRITEPATHS ]",), ' --dbus': ('COMMAND', "[ -w WRITEPATHS ]",), ' --desktop_user': ('', "[ -w WRITEPATHS ]",), ' --inetd': ('COMMAND', "[ -w WRITEPATHS ]",), ' --init': ('COMMAND', "[ -w WRITEPATHS ]",), ' --sandbox': ("[ -w WRITEPATHS ]",), ' --term_user': ("[ -w WRITEPATHS ]",), ' --x_user': ("[ -w WRITEPATHS ]",)}
-@@ -120,7 +124,7 @@ class CheckClass(argparse.Action):
+@@ -55,8 +59,6 @@ class CheckPath(argparse.Action):
+ class CheckType(argparse.Action):
+ 
+     def __call__(self, parser, namespace, values, option_string=None):
+-        domains = sepolicy.get_all_domains()
+-
+         if isinstance(values, str):
+             setattr(namespace, self.dest, values)
+         else:
+@@ -98,7 +100,7 @@ class CheckDomain(argparse.Action):
+         domains = sepolicy.get_all_domains()
+ 
+         if isinstance(values, str):
+-            if values not in domains:
++            if sepolicy.get_real_type_name(values) not in domains:
+                 raise ValueError("%s must be an SELinux process domain:\nValid domains: %s" % (values, ", ".join(domains)))
+             setattr(namespace, self.dest, values)
+         else:
+@@ -107,7 +109,7 @@ class CheckDomain(argparse.Action):
+                 newval = []
+ 
+             for v in values:
+-                if v not in domains:
++                if sepolicy.get_real_type_name(v) not in domains:
+                     raise ValueError("%s must be an SELinux process domain:\nValid domains: %s" % (v, ", ".join(domains)))
+                 newval.append(v)
+             setattr(namespace, self.dest, newval)
+@@ -120,7 +122,7 @@ class CheckClass(argparse.Action):
      def __call__(self, parser, namespace, values, option_string=None):
          global all_classes
          if not all_classes:
@@ -8135,7 +8380,16 @@ index 7d57f6e..6ae1da6 100755
          if values not in all_classes:
              raise ValueError("%s must be an SELinux class:\nValid classes: %s" % (values, ", ".join(all_classes)))
  
-@@ -171,7 +175,6 @@ class CheckPortType(argparse.Action):
+@@ -162,7 +164,7 @@ class CheckPortType(argparse.Action):
+         if not newval:
+             newval = []
+         for v in values:
+-            if v not in port_types:
++            if sepolicy.get_real_type_name(v) not in port_types:
+                 raise ValueError("%s must be an SELinux port type:\nValid port types: %s" % (v, ", ".join(port_types)))
+             newval.append(v)
+         setattr(namespace, self.dest, values)
+@@ -171,7 +173,6 @@ class CheckPortType(argparse.Action):
  class LoadPolicy(argparse.Action):
  
      def __call__(self, parser, namespace, values, option_string=None):
@@ -8143,7 +8397,7 @@ index 7d57f6e..6ae1da6 100755
          sepolicy.policy(values)
          setattr(namespace, self.dest, values)
  
-@@ -180,9 +183,8 @@ class CheckPolicyType(argparse.Action):
+@@ -180,9 +181,8 @@ class CheckPolicyType(argparse.Action):
  
      def __call__(self, parser, namespace, values, option_string=None):
          from sepolicy.generate import get_poltype_desc, poltype
@@ -8154,7 +8408,7 @@ index 7d57f6e..6ae1da6 100755
          setattr(namespace, self.dest, values)
  
  
-@@ -218,7 +220,7 @@ class InterfaceInfo(argparse.Action):
+@@ -218,7 +218,7 @@ class InterfaceInfo(argparse.Action):
          from sepolicy.interface import get_interface_dict
          interface_dict = get_interface_dict()
          for v in values:
@@ -8163,7 +8417,7 @@ index 7d57f6e..6ae1da6 100755
                  raise ValueError(_("Interface %s does not exist.") % v)
  
          setattr(namespace, self.dest, values)
-@@ -226,7 +228,7 @@ class InterfaceInfo(argparse.Action):
+@@ -226,7 +226,7 @@ class InterfaceInfo(argparse.Action):
  
  def generate_custom_usage(usage_text, usage_dict):
      sorted_keys = []
@@ -8172,7 +8426,7 @@ index 7d57f6e..6ae1da6 100755
          sorted_keys.append(i)
      sorted_keys.sort()
      for k in sorted_keys:
-@@ -248,18 +250,18 @@ def numcmp(val1, val2):
+@@ -248,18 +248,18 @@ def numcmp(val1, val2):
          if v1 < v2:
              return -1
      except:
@@ -8197,7 +8451,7 @@ index 7d57f6e..6ae1da6 100755
          for p in portdict:
              for t, recs in portdict[p]:
                  cond = get_conditionals(src, t, "%s_socket" % protocol, [perm])
-@@ -268,9 +270,9 @@ def _print_net(src, protocol, perm):
+@@ -268,9 +268,9 @@ def _print_net(src, protocol, perm):
                      port_strings.append("%s (%s) %s" % (", ".join(recs), t, boolean_text))
                  else:
                      port_strings.append("%s (%s)" % (", ".join(recs), t))
@@ -8209,7 +8463,7 @@ index 7d57f6e..6ae1da6 100755
  
  
  def network(args):
-@@ -281,29 +283,29 @@ def network(args):
+@@ -281,29 +281,29 @@ def network(args):
              if i[0] not in all_ports:
                  all_ports.append(i[0])
          all_ports.sort()
@@ -8249,7 +8503,7 @@ index 7d57f6e..6ae1da6 100755
  
      for a in args.applications:
          d = sepolicy.get_init_transtype(a)
-@@ -351,8 +353,8 @@ def manpage(args):
+@@ -351,8 +351,8 @@ def manpage(args):
          test_domains = args.domain
  
      for domain in test_domains:
@@ -8260,7 +8514,7 @@ index 7d57f6e..6ae1da6 100755
  
      if args.web:
          HTMLManPages(manpage_roles, manpage_domains, path, args.os)
-@@ -413,7 +415,7 @@ def communicate(args):
+@@ -413,7 +413,7 @@ def communicate(args):
      out = list(set(writable) & set(readable))
  
      for t in out:
@@ -8269,7 +8523,7 @@ index 7d57f6e..6ae1da6 100755
  
  
  def gen_communicate_args(parser):
-@@ -437,10 +439,12 @@ def booleans(args):
+@@ -437,10 +437,12 @@ def booleans(args):
      from sepolicy import boolean_desc
      if args.all:
          rc, args.booleans = selinux.security_get_boolean_names()
@@ -8283,7 +8537,7 @@ index 7d57f6e..6ae1da6 100755
  
  
  def gen_booleans_args(parser):
-@@ -479,20 +483,20 @@ def print_interfaces(interfaces, args, append=""):
+@@ -479,20 +481,20 @@ def print_interfaces(interfaces, args, append=""):
      for i in interfaces:
          if args.verbose:
              try:
@@ -8309,7 +8563,7 @@ index 7d57f6e..6ae1da6 100755
      if args.list_admin:
          print_interfaces(get_admin(args.file), args, "_admin")
      if args.list_user:
-@@ -504,7 +508,7 @@ def interface(args):
+@@ -504,7 +506,7 @@ def interface(args):
  
  
  def generate(args):
@@ -8318,7 +8572,7 @@ index 7d57f6e..6ae1da6 100755
      cmd = None
  # numbers present POLTYPE defined in sepolicy.generate
      conflict_args = {'TYPES': (NEWTYPE,), 'DOMAIN': (EUSER,), 'ADMIN_DOMAIN': (AUSER, RUSER, EUSER,)}
-@@ -515,7 +519,7 @@ def generate(args):
+@@ -515,7 +517,7 @@ def generate(args):
          for k in usage_dict:
              error_text += "%s" % (k)
          print(generate_usage)
@@ -8327,7 +8581,7 @@ index 7d57f6e..6ae1da6 100755
          sys.exit(1)
  
      if args.policytype in APPLICATIONS:
-@@ -560,7 +564,7 @@ def generate(args):
+@@ -560,7 +562,7 @@ def generate(args):
      if args.policytype in APPLICATIONS:
          mypolicy.gen_writeable()
          mypolicy.gen_symbols()
@@ -8336,7 +8590,7 @@ index 7d57f6e..6ae1da6 100755
  
  
  def gen_interface_args(parser):
-@@ -590,7 +594,7 @@ def gen_interface_args(parser):
+@@ -590,7 +592,7 @@ def gen_interface_args(parser):
  
  
  def gen_generate_args(parser):
@@ -8345,7 +8599,7 @@ index 7d57f6e..6ae1da6 100755
  
      generate_usage = generate_custom_usage(usage, usage_dict)
  
-@@ -638,8 +642,8 @@ def gen_generate_args(parser):
+@@ -638,8 +640,8 @@ def gen_generate_args(parser):
                            action="store_const", default=DAEMON,
                            help=_("Generate '%s' policy") % poltype[DAEMON])
  
@@ -8356,7 +8610,7 @@ index 7d57f6e..6ae1da6 100755
      group.add_argument("--admin_user", dest="policytype", const=AUSER,
                         action="store_const",
                         help=_("Generate '%s' policy") % poltype[AUSER])
-@@ -693,12 +697,12 @@ if __name__ == '__main__':
+@@ -693,12 +695,12 @@ if __name__ == '__main__':
          args = parser.parse_args(args=parser_args)
          args.func(args)
          sys.exit(0)
@@ -8373,7 +8627,7 @@ index 7d57f6e..6ae1da6 100755
 +        print("Out")
          sys.exit(0)
 diff --git policycoreutils-2.5/sepolicy/sepolicy/__init__.py policycoreutils-2.5/sepolicy/sepolicy/__init__.py
-index 693c6fe..19a0008 100644
+index 693c6fe..8c07c29 100644
 --- policycoreutils-2.5/sepolicy/sepolicy/__init__.py
 +++ policycoreutils-2.5/sepolicy/sepolicy/__init__.py
 @@ -3,24 +3,30 @@
@@ -8454,7 +8708,7 @@ index 693c6fe..19a0008 100644
              tdict.update({'source': i['source'], 'boolean': i['boolean']})
              if tdict not in tlist:
                  tlist.append(tdict)
-@@ -91,13 +103,49 @@ def get_conditionals(src, dest, tclass, perm):
+@@ -91,13 +103,58 @@ def get_conditionals(src, dest, tclass, perm):
  
  
  def get_conditionals_format_text(cond):
@@ -8470,6 +8724,15 @@ index 693c6fe..19a0008 100644
 +
 +def get_attributes_from_type(setype):
 +    return info(TYPE, setype)[0]["attributes"]
++
++
++# determine if entered type is an alias
++# and return corresponding type name
++def get_real_type_name(setype):
++    try:
++        return info(TYPE, setype)[0]["name"]
++    except RuntimeError:
++        return None
 +
 +
 +def file_type_is_executable(setype):
@@ -8506,7 +8769,7 @@ index 693c6fe..19a0008 100644
  file_type_str = {}
  file_type_str["a"] = _("all files")
  file_type_str["f"] = _("regular file")
-@@ -119,6 +167,46 @@ trans_file_type_str["-l"] = "l"
+@@ -119,6 +176,46 @@ trans_file_type_str["-l"] = "l"
  trans_file_type_str["-p"] = "p"
  
  
@@ -8553,7 +8816,7 @@ index 693c6fe..19a0008 100644
  def get_file_types(setype):
      flist = []
      mpaths = {}
-@@ -181,7 +269,7 @@ def find_file(reg):
+@@ -181,7 +278,7 @@ def find_file(reg):
      try:
          pat = re.compile(r"%s$" % reg)
      except:
@@ -8562,7 +8825,7 @@ index 693c6fe..19a0008 100644
          return []
      p = reg
      if p.endswith("(/.*)?"):
-@@ -193,12 +281,12 @@ def find_file(reg):
+@@ -193,12 +290,12 @@ def find_file(reg):
          if path[-1] != "/":    # is pass in it breaks without try block
              path += "/"
      except IndexError:
@@ -8577,7 +8840,7 @@ index 693c6fe..19a0008 100644
      except:
          return []
  
-@@ -206,7 +294,7 @@ def find_file(reg):
+@@ -206,7 +303,7 @@ def find_file(reg):
  def find_all_files(domain, exclude_list=[]):
      all_entrypoints = []
      executable_files = get_entrypoints(domain)
@@ -8586,7 +8849,7 @@ index 693c6fe..19a0008 100644
          if exe.endswith("_exec_t") and exe not in exclude_list:
              for path in executable_files[exe]:
                  for f in find_file(path):
-@@ -230,12 +318,15 @@ def find_entrypoint_path(exe, exclude_list=[]):
+@@ -230,12 +327,15 @@ def find_entrypoint_path(exe, exclude_list=[]):
  
  
  def read_file_equiv(edict, fc_path, modify):
@@ -8608,7 +8871,7 @@ index 693c6fe..19a0008 100644
      return edict
  
  file_equiv_modified = None
-@@ -268,9 +359,13 @@ def get_local_file_paths(fc_path=selinux.selinux_file_context_path()):
+@@ -268,9 +368,13 @@ def get_local_file_paths(fc_path=selinux.selinux_file_context_path()):
      if local_files:
          return local_files
      local_files = []
@@ -8625,7 +8888,7 @@ index 693c6fe..19a0008 100644
      for i in fc:
          rec = i.split()
          if len(rec) == 0:
-@@ -296,13 +391,19 @@ def get_fcdict(fc_path=selinux.selinux_file_context_path()):
+@@ -296,13 +400,19 @@ def get_fcdict(fc_path=selinux.selinux_file_context_path()):
      fd = open(fc_path, "r")
      fc = fd.readlines()
      fd.close()
@@ -8651,7 +8914,7 @@ index 693c6fe..19a0008 100644
  
      for i in fc:
          rec = i.split()
-@@ -334,7 +435,7 @@ def get_fcdict(fc_path=selinux.selinux_file_context_path()):
+@@ -334,7 +444,7 @@ def get_fcdict(fc_path=selinux.selinux_file_context_path()):
  
  def get_transitions_into(setype):
      try:
@@ -8660,7 +8923,7 @@ index 693c6fe..19a0008 100644
      except TypeError:
          pass
      return None
-@@ -350,7 +451,7 @@ def get_transitions(setype):
+@@ -350,7 +460,7 @@ def get_transitions(setype):
  
  def get_file_transitions(setype):
      try:
@@ -8669,7 +8932,7 @@ index 693c6fe..19a0008 100644
      except TypeError:
          pass
      return None
-@@ -377,7 +478,7 @@ def get_all_entrypoints():
+@@ -377,7 +487,7 @@ def get_all_entrypoints():
  def get_entrypoint_types(setype):
      entrypoints = []
      try:
@@ -8678,7 +8941,7 @@ index 693c6fe..19a0008 100644
      except TypeError:
          pass
      return entrypoints
-@@ -386,7 +487,7 @@ def get_entrypoint_types(setype):
+@@ -386,7 +496,7 @@ def get_entrypoint_types(setype):
  def get_init_transtype(path):
      entrypoint = selinux.getfilecon(path)[1].split(":")[2]
      try:
@@ -8687,7 +8950,7 @@ index 693c6fe..19a0008 100644
          if len(entrypoints) == 0:
              return None
          return entrypoints[0]["transtype"]
-@@ -397,7 +498,7 @@ def get_init_transtype(path):
+@@ -397,7 +507,7 @@ def get_init_transtype(path):
  
  def get_init_entrypoint(transtype):
      try:
@@ -8696,7 +8959,7 @@ index 693c6fe..19a0008 100644
          if len(entrypoints) == 0:
              return None
          return entrypoints[0]["target"]
-@@ -408,7 +509,7 @@ def get_init_entrypoint(transtype):
+@@ -408,7 +518,7 @@ def get_init_entrypoint(transtype):
  
  def get_init_entrypoint_target(entrypoint):
      try:
@@ -8705,7 +8968,7 @@ index 693c6fe..19a0008 100644
          return entrypoints[0]
      except TypeError:
          pass
-@@ -450,7 +551,7 @@ def get_methods():
+@@ -450,7 +560,7 @@ def get_methods():
      # List of per_role_template interfaces
          ifs = interfaces.InterfaceSet()
          ifs.from_file(fd)
@@ -8714,7 +8977,7 @@ index 693c6fe..19a0008 100644
          fd.close()
      except:
          sys.stderr.write("could not open interface info [%s]\n" % fn)
-@@ -465,7 +566,7 @@ all_types = None
+@@ -465,7 +575,7 @@ all_types = None
  def get_all_types():
      global all_types
      if all_types == None:
@@ -8723,7 +8986,7 @@ index 693c6fe..19a0008 100644
      return all_types
  
  user_types = None
-@@ -513,7 +614,6 @@ portrecsbynum = None
+@@ -513,7 +623,6 @@ portrecsbynum = None
  
  
  def gen_interfaces():
@@ -8731,7 +8994,7 @@ index 693c6fe..19a0008 100644
      ifile = defaults.interface_info()
      headers = defaults.headers()
      rebuild = False
-@@ -525,7 +625,9 @@ def gen_interfaces():
+@@ -525,7 +634,9 @@ def gen_interfaces():
  
      if os.getuid() != 0:
          raise ValueError(_("You must regenerate interface info by running /usr/bin/sepolgen-ifgen"))
@@ -8742,7 +9005,7 @@ index 693c6fe..19a0008 100644
  
  
  def gen_port_dict():
-@@ -562,6 +664,23 @@ def get_all_domains():
+@@ -562,6 +673,23 @@ def get_all_domains():
          all_domains = info(ATTRIBUTE, "domain")[0]["types"]
      return all_domains
  
@@ -8766,7 +9029,7 @@ index 693c6fe..19a0008 100644
  roles = None
  
  
-@@ -569,7 +688,7 @@ def get_all_roles():
+@@ -569,7 +697,7 @@ def get_all_roles():
      global roles
      if roles:
          return roles
@@ -8775,7 +9038,7 @@ index 693c6fe..19a0008 100644
      roles.remove("object_r")
      roles.sort()
      return roles
-@@ -607,7 +726,7 @@ def get_login_mappings():
+@@ -607,7 +735,7 @@ def get_login_mappings():
  
  
  def get_all_users():
@@ -8784,7 +9047,7 @@ index 693c6fe..19a0008 100644
      users.sort()
      return users
  
-@@ -766,7 +885,7 @@ all_attributes = None
+@@ -766,7 +894,7 @@ all_attributes = None
  def get_all_attributes():
      global all_attributes
      if not all_attributes:
@@ -8793,7 +9056,7 @@ index 693c6fe..19a0008 100644
      return all_attributes
  
  
-@@ -797,7 +916,7 @@ def policy(policy_file):
+@@ -797,7 +925,7 @@ def policy(policy_file):
  try:
      policy_file = get_installed_policy()
      policy(policy_file)
@@ -8802,7 +9065,16 @@ index 693c6fe..19a0008 100644
      if selinux.is_selinux_enabled() == 1:
          raise e
  
-@@ -828,7 +947,7 @@ def get_bools(setype):
+@@ -815,7 +943,7 @@ def gen_short_name(setype):
+         domainname = setype[:-2]
+     else:
+         domainname = setype
+-    if domainname + "_t" not in all_domains:
++    if get_real_type_name(domainname + "_t") not in all_domains:
+         raise ValueError("domain %s_t does not exist" % domainname)
+     if domainname[-1] == 'd':
+         short_name = domainname[:-1] + "_"
+@@ -828,7 +956,7 @@ def get_bools(setype):
      bools = []
      domainbools = []
      domainname, short_name = gen_short_name(setype)
@@ -8811,7 +9083,7 @@ index 693c6fe..19a0008 100644
          for b in i:
              if not isinstance(b, tuple):
                  continue
-@@ -851,6 +970,8 @@ def get_all_booleans():
+@@ -851,6 +979,8 @@ def get_all_booleans():
      global booleans
      if not booleans:
          booleans = selinux.security_get_boolean_names()[1]
@@ -8820,7 +9092,7 @@ index 693c6fe..19a0008 100644
      return booleans
  
  booleans_dict = None
-@@ -896,7 +1017,7 @@ def gen_bool_dict(path="/usr/share/selinux/devel/policy.xml"):
+@@ -896,7 +1026,7 @@ def gen_bool_dict(path="/usr/share/selinux/devel/policy.xml"):
              desc = i.find("desc").find("p").text.strip("\n")
              desc = re.sub("\n", " ", desc)
              booleans_dict[i.get('name')] = ("global", i.get('dftval'), desc)
@@ -8829,7 +9101,7 @@ index 693c6fe..19a0008 100644
          pass
      return booleans_dict
  
-@@ -919,24 +1040,14 @@ def boolean_desc(boolean):
+@@ -919,24 +1049,14 @@ def boolean_desc(boolean):
  
  
  def get_os_version():
@@ -10902,6 +11174,19 @@ index 900def5..54dd1db 100644
 -.BR checkpolicy (8)
 +.BR checkpolicy (8),
 +.BR customizable_types (5)
+diff --git policycoreutils-2.5/setfiles/setfiles.8 policycoreutils-2.5/setfiles/setfiles.8
+index 57067d2..2ec9618 100644
+--- policycoreutils-2.5/setfiles/setfiles.8
++++ policycoreutils-2.5/setfiles/setfiles.8
+@@ -31,7 +31,7 @@ check the validity of the contexts against the specified binary policy.
+ .TP
+ .B \-d
+ show what specification matched each file (do not abort validation
+-after ABORT_ON_ERRORS errors).
++after ABORT_ON_ERRORS errors). Not affected by "\-q"
+ .TP
+ .B \-e directory
+ directory to exclude (repeat option for more than one directory).
 diff --git policycoreutils-2.5/setfiles/setfiles.c policycoreutils-2.5/setfiles/setfiles.c
 index 9ac3ebd..e39b500 100644
 --- policycoreutils-2.5/setfiles/setfiles.c
