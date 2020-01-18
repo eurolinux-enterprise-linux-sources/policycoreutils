@@ -1,16 +1,13 @@
 %global	libauditver	2.1.3-4
-%global libsepolver	2.5-10
-%global	libsemanagever	2.5-14
-%global	libselinuxver	2.5-14
+%global libsepolver	2.5-6
+%global	libsemanagever	2.5-5
+%global	libselinuxver	2.5-6
 %global	sepolgenver	1.2.3
-%global setoolsver	3.3.8-4
-
-%global _hardened_build 1
 
 Summary: SELinux policy core utilities
 Name:	 policycoreutils
 Version: 2.5
-Release: 33%{?dist}
+Release: 17.1%{?dist}
 License: GPLv2
 Group:	 System Environment/Base
 # https://github.com/SELinuxProject/selinux/wiki/Releases
@@ -21,7 +18,7 @@ Source2: policycoreutils_man_ru2.tar.bz2
 Source3: system-config-selinux.png
 Source4: sepolicy-icons.tgz
 Source5: policycoreutils-po.tgz
-# HEAD ba371a0d4f3a0a70ba78fcad5c8de40a283762ae
+# HEAD e73b2759c68f261e3204c3523593b6ec25209b62
 Patch0:	 policycoreutils-rhel.patch
 Patch1:  sepolgen-rhel.patch
 Patch10: policycoreutils-preserve-timestamps-for-.py-files.patch
@@ -33,19 +30,10 @@ Provides: /sbin/restorecon
 
 BuildRequires:	pam-devel libcgroup-devel libsepol-static >= %{libsepolver} libsemanage-static >= %{libsemanagever} libselinux-devel >= %{libselinuxver}  libcap-devel audit-libs-devel >=  %{libauditver} gettext
 BuildRequires: desktop-file-utils dbus-devel dbus-glib-devel
-BuildRequires: python python-devel setools-devel >= %{setoolsver}
-BuildRequires: redhat-rpm-config
+BuildRequires: python python-devel setools-devel >= 3.3.8-1
 BuildRequires: diffstat
-Requires: util-linux
-Requires: grep
-Requires: gawk
-Requires: diffutils
-Requires: rpm
-Requires: sed
-Requires: libsepol >= %{libsepolver}
-Requires: libselinux-utils >=  %{libselinuxver}
-Requires: libsemanage >= %{libsemanagever}
-Requires: coreutils
+Requires: util-linux grep gawk diffutils rpm sed
+Requires: libsepol >= %{libsepolver} coreutils libselinux-utils >=  %{libselinuxver}
 
 %description
 Security-enhanced Linux is a feature of the Linux® kernel and a number
@@ -97,8 +85,8 @@ UpdateTimestamps -p0 %{PATCH1}
 
 
 %build
-make -C policycoreutils-2.5 LSPP_PRIV=y SBINDIR="%{_sbindir}" LIBDIR="%{_libdir}" CFLAGS="%{optflags}" LDFLAGS="%{__global_ldflags}" SEMODULE_PATH="/usr/sbin" all
-make -C sepolgen-1.2.3 SBINDIR="%{_sbindir}" LSPP_PRIV=y LIBDIR="%{_libdir}" CFLAGS="%{optflags}" LDFLAGS="%{__global_ldflags}" all
+make -C policycoreutils-2.5 LSPP_PRIV=y SBINDIR="%{_sbindir}" LIBDIR="%{_libdir}" CFLAGS="%{optflags} -fPIE" LDFLAGS="-pie -Wl,-z,relro -Wl,-z,now" SEMODULE_PATH="/usr/sbin" all
+make -C sepolgen-1.2.3 SBINDIR="%{_sbindir}" LSPP_PRIV=y LIBDIR="%{_libdir}" CFLAGS="%{optflags} -fPIE" LDFLAGS="-pie -Wl,-z,relro" all
 
 %install
 mkdir -p %{buildroot}%{_bindir}
@@ -109,12 +97,12 @@ mkdir -p %{buildroot}%{_mandir}/man8
 %{__mkdir} -p %{buildroot}/%{_usr}/share/doc/%{name}/
 mkdir -p %{buildroot}/var/lib/selinux
 
-make -C policycoreutils-2.5 LSPP_PRIV=y  DESTDIR="%{buildroot}" SBINDIR="%{buildroot}%{_sbindir}" LIBDIR="%{buildroot}%{_libdir}" CFLAGS="%{optflags}" LDFLAGS="%{__global_ldflags}" SEMODULE_PATH="/usr/sbin" install
+make -C policycoreutils-2.5 LSPP_PRIV=y  DESTDIR="%{buildroot}" SBINDIR="%{buildroot}%{_sbindir}" LIBDIR="%{buildroot}%{_libdir}" SEMODULE_PATH="/usr/sbin" install
 
 # Systemd
 rm -rf %{buildroot}/%{_sysconfdir}/rc.d/init.d/restorecond
 
-make -C sepolgen-1.2.3 DESTDIR="%{buildroot}" SBINDIR="%{buildroot}%{_sbindir}" LIBDIR="%{buildroot}%{_libdir}" CFLAGS="%{optflags}" LDFLAGS="%{__global_ldflags}" install
+make -C sepolgen-1.2.3 DESTDIR="%{buildroot}" SBINDIR="%{buildroot}%{_sbindir}" LIBDIR="%{buildroot}%{_libdir}" install
 
 tar -jxf %{SOURCE2} -C %{buildroot}/
 rm -f %{buildroot}/usr/share/man/ru/man8/genhomedircon.8.gz
@@ -154,7 +142,7 @@ Requires:audit-libs-python >=  %{libauditver}
 Obsoletes: policycoreutils < 2.0.61-2
 Requires: python-IPy
 Requires: checkpolicy
-Requires: setools-libs >= %{setoolsver}
+Requires: setools-libs >= 3.3.8-1
 
 %description python
 The policycoreutils-python package contains the management tools use to manage
@@ -393,87 +381,6 @@ The policycoreutils-restorecond package contains the restorecond service.
 %systemd_postun_with_restart restorecond.service
 
 %changelog
-* Tue Jun 18 2019 Vit Mojzis <vmojzis@redhat.com> - 2.5-33
-- Use flags definitions from redhat-rpm-config
-- Use CFLAGS and LDFLAGS in "make install"
-
-* Wed Jun 12 2019 Vit Mojzis <vmojzis@redhat.com> - 2.5-32
-- Update translations (#1689943)
-
-* Mon Mar 04 2019 Vit Mojzis <vmojzis@redhat.com> - 2.5-31
-- semanage: Start exporting "ibendport" and "ibpkey" entries (#1657196)
-- semanage: Do not show "None" levels when using a non-MLS policy (#1400482)
-- semanage: Include MCS/MLS range when exporting local customizations (#1400482)
-
-* Mon Feb 25 2019 Vit Mojzis <vmojzis@redhat.com> - 2.5-30
-- semanage/seobject: Fix listing boolean values (#1391605)
-- sepolicy: Make policy files sorting more robust
-- semanage: Fix setting alternative policy store (#1558033)
-- semanage: Load a store policy and set the store SELinux policy root
-- sepolicy: Add sepolicy.load_store_policy(store)
-- semanage: import sepolicy only when it's needed
-- semanage: move valid_types initialisations to class constructors
-- semanage/seobject: Fix indentation issues
-- scripts/fixfiles: Do not fail on file_contexts.local (#1647714)
-
-* Tue Sep 18 2018 Vit Mojzis <vmojzis@redhat.com> - 2.5-29
-- gui: Make all polgen button labels translatable (#1569451)
-- Update translations (#1569451)
-
-* Wed Aug 29 2018 Vit Mojzis <vmojzis@redhat.com> - 2.5-28
-- Require setools containing SCTP patch (#1621004)
-
-* Fri Aug 24 2018 Vit Mojzis <vmojzis@redhat.com> - 2.5-27
-- semanage: fix Python syntax of catching several exceptions (#1598444)
-
-* Tue Aug 07 2018 Vit Mojzis <vmojzis@redhat.com> - 2.5-26
-- Add dependency on latest libsemanage package (#1612818)
-
-* Fri Jul 27 2018 Vit Mojzis <vmojzis@redhat.com> - 2.5-25
-- Update translations (#1569451)
-
-* Thu Jul 26 2018 Vit Mojzis <vmojzis@redhat.com> - 2.5-24
-- Stop rejecting SCTP and DCCP in sepolicy.info
-- semanage: Replace bare except with specific one (#1598444)
-- semanage: Fix logger class definition (#1598444)
-- semanage: Stop rejecting aliases in semanage commands (#1544793)
-- sepolicy: Stop rejecting aliases in sepolicy commands (#1600009)
-- semanage: Stop logging loginRecords changes (#1294663)
-- Use file_contexts.local in fixfiles restore (#1559808)
-
-* Fri May 11 2018 Vit Mojzis <vmojzis@redhat.com> - 2.5-23
-- Update translation files and remove empty ones (#1375915)
-- sepolicy: Fix sepolicy manpage (#1509383)
-- semanage/seobject: Fix moduleRecords.modify() (#1408331)
-- semodule: Improve man page and unify it with --help (#1320565)
-- setfiles: Improve description of -d switch (#1271327)
-- sepolgen: Try to translate SELinux contexts to raw (#1356149)
-
-* Mon Dec 11 2017 Petr Lautrbach <plautrba@redhat.com> - 2.5-22
-- semanage: Fix fcontext help message (#1499259)
-- semanage: Improve semanage-user.8 man page (#1079946)
-- semodule: Improve man page (#1337192)
-
-* Thu Dec 07 2017 Petr Lautrbach <plautrba@redhat.com> - 2.5-21
-- Update translations
-
-* Thu Nov 30 2017 Vit Mojzis <vmojzis@redhat.com> - 2.5-20
-- setfiles: Mention customizable types in restorecon man page (#1260238)
-- sepolicy: do not fail when file_contexts.local or .subs do not exist (#1512590)
-- semanage: Fix export of ibendport entries (#1471809)
-
-* Tue Nov 07 2017 Petr Lautrbach <plautrba@redhat.com> - 2.5-19
-- semanage: Call semanage_set_reload only if -N is used (#1421160)
-
-* Thu Oct 19 2017 Vit Mojzis <vmojzis@redhat.com> - 2.5-18
-- semanage: Enable listing file_contexts.homedirs
-- semanage: Fix manpage author for ibpkey and ibendport pages.
-- semanage: Update man pages for infiniband
-- semanage: Update semanage to allow runtime labeling of ibendports
-- semanage: Update semanage to allow runtime labeling of Infiniband Pkeys
-- semanage: Improve semanage-port man page
-- fixfiles: do not dereference link files in tmp
-
 * Fri May 26 2017 Petr Lautrbach <plautrba@redhat.com> - 2.5-17.1
 - Update translations
 

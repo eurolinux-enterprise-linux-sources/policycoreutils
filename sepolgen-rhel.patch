@@ -328,7 +328,7 @@ index 9b1d0c8..2cef8e8 100644
      '''bool : BOOL IDENTIFIER TRUE SEMI
              | BOOL IDENTIFIER FALSE SEMI'''
 diff --git sepolgen-1.2.3/src/sepolgen/refpolicy.py sepolgen-1.2.3/src/sepolgen/refpolicy.py
-index 31b40d8..352b187 100644
+index 31b40d8..2ee029c 100644
 --- sepolgen-1.2.3/src/sepolgen/refpolicy.py
 +++ sepolgen-1.2.3/src/sepolgen/refpolicy.py
 @@ -112,6 +112,9 @@ class Node(PolicyBase):
@@ -341,19 +341,7 @@ index 31b40d8..352b187 100644
      def typeattributes(self):
          """Iterate over all of the TypeAttribute children of this Interface."""
          return filter(lambda x: isinstance(x, TypeAttribute), walktree(self))
-@@ -281,6 +284,11 @@ class SecurityContext(Leaf):
- 
-         Raises ValueError if the string is not parsable as a security context.
-         """
-+        # try to translate the context string to raw form
-+        raw = selinux.selinux_trans_to_raw_context(context)
-+        if raw[0] == 0:
-+            context = raw[1]
-+
-         fields = context.split(":")
-         if len(fields) < 3:
-             raise ValueError("context string [%s] not in a valid format" % context)
-@@ -522,6 +530,19 @@ class TypeRule(Leaf):
+@@ -522,6 +525,19 @@ class TypeRule(Leaf):
                                       self.tgt_types.to_space_str(),
                                       self.obj_classes.to_space_str(),
                                       self.dest_type)
